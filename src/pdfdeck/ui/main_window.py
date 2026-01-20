@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QStackedWidget, QStatusBar, QMessageBox, QFileDialog, QLabel
 )
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, QTimer
 from PyQt6.QtGui import QCloseEvent
 
 from pdfdeck import __app_name__, __version__
@@ -65,6 +65,9 @@ class MainWindow(QMainWindow):
 
         # Ustaw początkową stronę
         self._sidebar.set_active_page("pages")
+
+        # Sprawdź aktualizacje po uruchomieniu (z opóźnieniem)
+        QTimer.singleShot(2000, self._check_for_updates)
 
     def _setup_ui(self) -> None:
         """Tworzy główny interfejs."""
@@ -339,6 +342,48 @@ class MainWindow(QMainWindow):
                     "Błąd",
                     f"Nie można zapisać pliku:\n{e}"
                 )
+
+    # === Auto-update ===
+
+    def _check_for_updates(self) -> None:
+        """Sprawdza aktualizacje przy starcie."""
+        try:
+            from pdfdeck.core.updater import UpdateManager, UpdateChannel
+
+            # Wczytaj kanał z ustawień
+            channel = self._load_update_channel()
+
+            self._update_manager = UpdateManager(channel)
+            self._update_manager.check_complete.connect(self._on_update_check_complete)
+
+            # Sprawdź w tle
+            self._update_manager.check_for_updates()
+        except Exception as e:
+            # Ciche niepowodzenie - nie blokuj startu aplikacji
+            print(f"Błąd sprawdzania aktualizacji: {e}")
+
+    def _load_update_channel(self) -> "UpdateChannel":
+        """Wczytuje kanał aktualizacji z ustawień."""
+        from pdfdeck.core.updater import UpdateChannel
+        import json
+
+        config_path = Path.home() / ".pdfdeck" / "settings.json"
+        try:
+            if config_path.exists():
+                with open(config_path, "r", encoding="utf-8") as f:
+                    settings = json.load(f)
+                    channel = settings.get("update_channel", "stable")
+                    return UpdateChannel.BETA if channel == "beta" else UpdateChannel.STABLE
+        except Exception:
+            pass
+        return UpdateChannel.STABLE
+
+    def _on_update_check_complete(self, result: "UpdateCheckResult") -> None:
+        """Obsługa wyniku sprawdzenia aktualizacji."""
+        if result.update_available:
+            from pdfdeck.ui.dialogs.update_dialog import UpdateDialog
+
+            UpdateDialog.show_update_dialog(result, self)
 
     # === Public API ===
 

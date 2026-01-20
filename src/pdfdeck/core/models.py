@@ -5,6 +5,7 @@ Zawiera dataclassy używane w całej aplikacji.
 """
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum, auto
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -272,3 +273,37 @@ class BulkFillConfig:
     output_dir: Path
     field_mappings: List[FormFieldMapping] = field(default_factory=list)
     filename_pattern: str = "output_{index}.pdf"
+
+
+# === Auto-updater ===
+
+class UpdateChannel(Enum):
+    """Kanał aktualizacji."""
+    STABLE = auto()
+    BETA = auto()
+
+
+@dataclass
+class UpdateInfo:
+    """Informacje o dostępnej aktualizacji."""
+    version: str
+    download_url: str
+    sha512: str
+    size: int
+    release_date: datetime
+    filename: str
+
+    @property
+    def size_mb(self) -> float:
+        """Rozmiar w MB."""
+        return self.size / 1024 / 1024
+
+
+@dataclass
+class UpdateCheckResult:
+    """Wynik sprawdzenia aktualizacji."""
+    update_available: bool
+    current_version: str
+    latest_version: str
+    update_info: Optional[UpdateInfo] = None
+    error: Optional[str] = None
