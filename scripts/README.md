@@ -232,16 +232,94 @@ git push origin v1.0.0
 
 ## Repozytoria
 
+**WAŻNE:** Ten skrypt wymaga **2 oddzielnych repozytoriów** na GitHub!
+
+| Repo                       | Przykład                   | Przeznaczenie              |
+|----------------------------|----------------------------|----------------------------|
+| **origin** (kod źródłowy)  | `username/myapp`           | Kod, commity, tagi         |
+| **releases** (instalatory) | `username/myapp-releases`  | GitHub Releases, pliki yml |
+
+### Dlaczego 2 repozytoria?
+
+1. **Separacja kodu od binarek** - repo z kodem pozostaje lekkie
+2. **Auto-update** - pliki `latest.yml`/`beta.yml` muszą być w głównym branchu releases repo
+3. **Bezpieczeństwo** - instalatory nie mieszają się z kodem źródłowym
+
 ### Source repo (origin)
-- Kod źródłowy
-- Commity i tagi wersji
-- **NIE** uploaduj instalatorów
+
+- Kod źródłowy aplikacji
+- Commity i tagi wersji (`v1.0.0`)
+- **NIE** uploaduj instalatorów (.exe)
+- Konfiguracja: `git remote add origin https://github.com/username/myapp.git`
 
 ### Releases repo
+
 - GitHub Releases z instalatorami
-- Pliki `latest.yml` i `beta.yml` w branchu `main`
-- **NIE** pushuj kodu źródłowego (`git push`)
-- Używaj **tylko** `gh release create`
+- Pliki `latest.yml` i `beta.yml` w branchu `main` (dla auto-update)
+- **NIE** pushuj kodu źródłowego
+- Skrypt automatycznie tworzy to repo jeśli nie istnieje
+
+---
+
+## Zakładanie repozytoriów
+
+### Opcja 1: Automatycznie (zalecane)
+
+Skrypt `release.py` automatycznie utworzy **releases repo** jeśli nie istnieje.
+
+Dla **source repo** użyj GitHub CLI:
+
+```bash
+# 1. Zainicjuj lokalne repo git
+git init
+
+# 2. Utwórz repo na GitHub i połącz
+gh repo create username/myapp --public --source=. --push
+
+# 3. Skonfiguruj releases_repo w pyproject.toml
+# [tool.release]
+# releases_repo = "username/myapp-releases"
+
+# 4. Uruchom release - utworzy releases repo automatycznie
+python scripts/release.py 1.0.0
+```
+
+### Opcja 2: Ręcznie
+
+```bash
+# 1. Utwórz source repo na github.com/new
+# Nazwa: myapp
+
+# 2. Utwórz releases repo na github.com/new
+# Nazwa: myapp-releases
+# Opis: "MyApp releases and auto-update files"
+
+# 3. Połącz lokalne repo z origin
+git init
+git remote add origin https://github.com/username/myapp.git
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git push -u origin main
+
+# 4. Skonfiguruj pyproject.toml
+# [tool.release]
+# releases_repo = "username/myapp-releases"
+```
+
+### Weryfikacja
+
+```bash
+# Sprawdź czy oba repozytoria są skonfigurowane
+python scripts/release.py --check
+```
+
+Powinno pokazać:
+
+```text
+[OK] Git remote 'origin': configured
+[OK] Releases repo 'username/myapp-releases': exists
+```
 
 ---
 
