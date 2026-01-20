@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\\\Users\\\\tomas\\\\Cursor project\\\\PDFDeck\")",
+      "Bash(dir:*)",
+      "Bash(tree:*)",
+      "Bash(pip install:*)",
+      "Bash(python -c:*)",
+      "Bash(python -m pdfdeck:*)",
+      "Bash(timeout:*)",
+      "Bash(start python -m pdfdeck)",
+      "Bash(find:*)",
+      "Bash(python -m ruff check:*)",
+      "Bash(python scripts/release.py:*)",
+      "Bash(git remote add:*)",
+      "Bash(git init:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

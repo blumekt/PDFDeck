@@ -1,0 +1,72 @@
+[project]
+name = "pdfdeck"
+version = "0.1.0"
+description = "Zaawansowana aplikacja desktopowa do manipulacji PDF"
+authors = [
+    {name = "PDFDeck Team"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+keywords = ["pdf", "editor", "desktop", "pyqt6", "pymupdf"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+]
+dependencies = [
+    "PyMuPDF>=1.24.0",
+    "PyQt6>=6.6.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-qt>=4.2.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+pdfdeck = "pdfdeck.__main__:main"
+
+[project.gui-scripts]
+pdfdeck-gui = "pdfdeck.__main__:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pdfdeck = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.release]
+app_name = "PDFDeck"
+releases_repo = "blumekt/PDFDeck-releases"
+installer_name = "PDFDeck_Setup_{version}.exe"
+spec_file = "pdfdeck.spec"
+installer_iss = "installer/pdfdeck_installer.iss"

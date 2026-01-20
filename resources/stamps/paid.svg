@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+  <rect x="2" y="2" width="196" height="56" fill="none" stroke="#27ae60" stroke-width="3" rx="5"/>
+  <text x="100" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#27ae60" text-anchor="middle">ZAPŁACONO</text>
+</svg>
