@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QMessageBox, QFileDialog
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 
 from pdfdeck.ui.pages.base_page import BasePage
@@ -29,6 +29,7 @@ class PagePreview(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._original_pixmap: Optional[QPixmap] = None
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -51,34 +52,29 @@ class PagePreview(QWidget):
 
     def set_image(self, png_data: bytes) -> None:
         """Ustawia obraz podglądu."""
-        pixmap = QPixmap()
-        pixmap.loadFromData(png_data)
+        self._original_pixmap = QPixmap()
+        self._original_pixmap.loadFromData(png_data)
+        self._update_scaled_image()
 
-        # Skaluj do rozmiaru widgetu zachowując proporcje
-        scaled = pixmap.scaled(
-            self._image_label.size(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        )
-
-        self._image_label.setPixmap(scaled)
-
-    def clear(self) -> None:
-        """Czyści podgląd."""
-        self._image_label.clear()
-
-    def resizeEvent(self, event) -> None:
-        """Obsługa zmiany rozmiaru."""
-        super().resizeEvent(event)
-        # Przerysuj obraz jeśli istnieje
-        pixmap = self._image_label.pixmap()
-        if pixmap and not pixmap.isNull():
-            scaled = pixmap.scaled(
+    def _update_scaled_image(self) -> None:
+        """Skaluje oryginalny obraz do rozmiaru widgetu."""
+        if self._original_pixmap and not self._original_pixmap.isNull():
+            scaled = self._original_pixmap.scaled(
                 self._image_label.size(),
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation
             )
             self._image_label.setPixmap(scaled)
+
+    def clear(self) -> None:
+        """Czyści podgląd."""
+        self._original_pixmap = None
+        self._image_label.clear()
+
+    def resizeEvent(self, event) -> None:
+        """Obsługa zmiany rozmiaru."""
+        super().resizeEvent(event)
+        self._update_scaled_image()
 
 
 class PagesView(BasePage):
@@ -99,6 +95,9 @@ class PagesView(BasePage):
     |  Zaznaczono: X stron    [Usuń] [Zapisz]  |
     +------------------------------------------+
     """
+
+    # Sygnał żądania regeneracji miniatur
+    thumbnails_refresh_requested = pyqtSignal()
 
     def __init__(self, pdf_manager: "PDFManager", parent=None):
         super().__init__("Strony", parent)
@@ -205,12 +204,18 @@ class PagesView(BasePage):
         """Obsługa zmiany kolejności stron."""
         try:
             self._pdf_manager.reorder_pages(new_order)
+            # Odśwież widok miniatur i zażądaj regeneracji
+            self.on_document_loaded()
+            self.thumbnails_refresh_requested.emit()
         except Exception as e:
             QMessageBox.warning(
                 self,
                 "Błąd",
                 f"Nie można zmienić kolejności stron:\n{e}"
             )
+            # Odśwież widok żeby przywrócić prawidłowy stan
+            self.on_document_loaded()
+            self.thumbnails_refresh_requested.emit()
 
     def _on_files_dropped(self, file_paths: list, insert_pos: int) -> None:
         """Obsługa drop plików PDF z zewnątrz."""

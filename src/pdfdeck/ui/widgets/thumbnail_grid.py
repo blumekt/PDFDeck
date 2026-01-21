@@ -54,6 +54,7 @@ class ThumbnailGrid(QListWidget):
         super().__init__(parent)
 
         self._page_count = 0
+        self._dragged_item: Optional[QListWidgetItem] = None
         self._setup_widget()
         self._setup_context_menu()
 
@@ -66,8 +67,8 @@ class ThumbnailGrid(QListWidget):
         self.setIconSize(QSize(self.THUMBNAIL_SIZE, self.THUMBNAIL_SIZE))
         self.setGridSize(QSize(self.ITEM_SIZE, self.ITEM_SIZE + 25))
 
-        # Ruch: Free pozwala na przeciąganie w dowolne miejsce
-        self.setMovement(QListWidget.Movement.Free)
+        # Ruch: Snap - elementy wskakują do siatki
+        self.setMovement(QListWidget.Movement.Snap)
 
         # Resize mode: dopasuj układ przy zmianie rozmiaru
         self.setResizeMode(QListWidget.ResizeMode.Adjust)
@@ -76,7 +77,7 @@ class ThumbnailGrid(QListWidget):
         self.setDragEnabled(True)
         self.setAcceptDrops(True)
         self.setDropIndicatorShown(True)
-        self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.setDragDropMode(QAbstractItemView.DragDropMode.DragDrop)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
 
         # Multi-select z Ctrl/Shift
@@ -85,8 +86,14 @@ class ThumbnailGrid(QListWidget):
         # Uniform item sizes dla wydajności
         self.setUniformItemSizes(True)
 
-        # Spacing
-        self.setSpacing(10)
+        # Spacing - szersze separatory między stronami
+        self.setSpacing(20)
+
+        # Wyrównanie - flow i wrapping
+        self.setFlow(QListWidget.Flow.LeftToRight)
+        self.setWrapping(True)
+        self.setLayoutMode(QListWidget.LayoutMode.Batched)
+        self.setBatchSize(100)
 
         # Styl
         self.setStyleSheet("""
@@ -94,7 +101,7 @@ class ThumbnailGrid(QListWidget):
                 background-color: #1f2940;
                 border: 1px solid #2d3a50;
                 border-radius: 10px;
-                padding: 10px;
+                padding: 20px;
                 outline: none;
             }
             QListWidget::item {
@@ -102,7 +109,7 @@ class ThumbnailGrid(QListWidget):
                 border: 2px solid transparent;
                 border-radius: 8px;
                 padding: 5px;
-                margin: 5px;
+                margin: 10px;
             }
             QListWidget::item:hover {
                 border-color: #3d4a60;
@@ -148,14 +155,14 @@ class ThumbnailGrid(QListWidget):
         """)
 
         # Usuń
-        delete_action = QAction("Usuń zaznaczone", self)
+        delete_action = QAction("Usuń", self)
         delete_action.triggered.connect(self._on_delete_selected)
         menu.addAction(delete_action)
 
         # Podziel tutaj
         page_index = item.data(Qt.ItemDataRole.UserRole)
         if page_index is not None and page_index < self._page_count - 1:
-            split_action = QAction(f"Podziel po stronie {page_index + 1}", self)
+            split_action = QAction(f"Rozdziel PDF na dwa od strony {page_index + 2}", self)
             split_action.triggered.connect(lambda: self.split_requested.emit(page_index))
             menu.addAction(split_action)
 
@@ -250,6 +257,11 @@ class ThumbnailGrid(QListWidget):
 
     # === Drag & Drop ===
 
+    def startDrag(self, supportedActions) -> None:
+        """Zapamiętaj przeciągany element przed rozpoczęciem drag."""
+        self._dragged_item = self.currentItem()
+        super().startDrag(supportedActions)
+
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         """Obsługa wejścia drag."""
         if event.mimeData().hasUrls():
@@ -258,9 +270,11 @@ class ThumbnailGrid(QListWidget):
             if any(url.toLocalFile().lower().endswith('.pdf') for url in urls):
                 event.acceptProposedAction()
                 return
+            event.ignore()
+            return
 
-        # Wewnętrzny drag & drop
-        super().dragEnterEvent(event)
+        # Wewnętrzny drag & drop - zawsze akceptuj
+        event.accept()
 
     def dragMoveEvent(self, event) -> None:
         """Obsługa ruchu drag."""
@@ -268,7 +282,8 @@ class ThumbnailGrid(QListWidget):
             event.acceptProposedAction()
             return
 
-        super().dragMoveEvent(event)
+        # Wewnętrzny drag - zawsze akceptuj (wstawianie między elementy)
+        event.accept()
 
     def dropEvent(self, event: QDropEvent) -> None:
         """
@@ -296,31 +311,74 @@ class ThumbnailGrid(QListWidget):
                 return
 
         # Wewnętrzny drag & drop - reorder
-        source_item = self.currentItem()
+        source_item = self._dragged_item
         if not source_item:
             event.ignore()
             return
 
-        # Znajdź pozycję drop
+        source_row = self.row(source_item)
         drop_pos = event.position().toPoint()
-        target_item = self.itemAt(drop_pos)
 
-        if target_item and target_item != source_item:
-            source_row = self.row(source_item)
-            target_row = self.row(target_item)
+        # Oblicz pozycję wstawienia na podstawie współrzędnych
+        insert_row = self._calculate_insert_position(drop_pos)
 
-            # Przenieś item
-            taken_item = self.takeItem(source_row)
-            self.insertItem(target_row, taken_item)
-            self.setCurrentItem(taken_item)
-
-            # Zaktualizuj numery stron i emituj nową kolejność
-            self._update_page_numbers()
-            self.order_changed.emit(self.get_current_order())
-
-            event.accept()
-        else:
+        # Nie rób nic jeśli pozycja się nie zmienia
+        if insert_row == source_row or insert_row == source_row + 1:
             event.ignore()
+            self._dragged_item = None
+            return
+
+        # Oblicz nową kolejność
+        current_order = self.get_current_order()
+        page_index = current_order.pop(source_row)
+
+        # Dostosuj pozycję wstawienia po usunięciu źródłowego elementu
+        if source_row < insert_row:
+            insert_row -= 1
+
+        current_order.insert(insert_row, page_index)
+
+        # Emituj nową kolejność - pages_view odświeży widok
+        self.order_changed.emit(current_order)
+        event.accept()
+
+        # Reset
+        self._dragged_item = None
+
+    def _calculate_insert_position(self, pos) -> int:
+        """Oblicza pozycję wstawienia na podstawie współrzędnych kursora."""
+        if self.count() == 0:
+            return 0
+
+        # Znajdź najbliższy element
+        min_dist = float('inf')
+        closest_idx = 0
+        insert_before = True
+
+        for i in range(self.count()):
+            item = self.item(i)
+            rect = self.visualItemRect(item)
+            center = rect.center()
+
+            # Odległość od lewej krawędzi (wstawienie przed)
+            left_dist = abs(pos.x() - rect.left()) + abs(pos.y() - center.y())
+            # Odległość od prawej krawędzi (wstawienie za)
+            right_dist = abs(pos.x() - rect.right()) + abs(pos.y() - center.y())
+
+            if left_dist < min_dist:
+                min_dist = left_dist
+                closest_idx = i
+                insert_before = True
+
+            if right_dist < min_dist:
+                min_dist = right_dist
+                closest_idx = i
+                insert_before = False
+
+        if insert_before:
+            return closest_idx
+        else:
+            return closest_idx + 1
 
     def _update_page_numbers(self) -> None:
         """Aktualizuje wyświetlane numery stron po reorderingu."""

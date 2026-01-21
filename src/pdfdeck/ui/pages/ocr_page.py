@@ -20,9 +20,14 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QPixmap, QImage
 
+from typing import TYPE_CHECKING
+
 from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.styled_button import StyledButton
 from pdfdeck.core.ocr_engine import OCREngine, OCRConfig, OCRResult
+
+if TYPE_CHECKING:
+    from pdfdeck.core.pdf_manager import PDFManager
 
 
 def t(key: str, default: str = None) -> str:
@@ -93,9 +98,10 @@ class OCRPage(BasePage):
     - Tworzenie searchable PDF
     """
 
-    def __init__(self, main_window):
-        super().__init__(main_window)
+    def __init__(self, pdf_manager: "PDFManager", parent=None):
+        super().__init__(parent)
 
+        self._pdf_manager = pdf_manager
         self._ocr_results: List[OCRResult] = []
         self._worker: Optional[OCRWorker] = None
 
@@ -498,10 +504,10 @@ class OCRPage(BasePage):
 
     def on_document_loaded(self) -> None:
         """Wywoływane po załadowaniu dokumentu."""
-        if self.pdf_manager and self.pdf_manager.page_count > 0:
-            self._from_spin.setMaximum(self.pdf_manager.page_count)
-            self._to_spin.setMaximum(self.pdf_manager.page_count)
-            self._to_spin.setValue(self.pdf_manager.page_count)
+        if self._pdf_manager and self._pdf_manager.page_count > 0:
+            self._from_spin.setMaximum(self._pdf_manager.page_count)
+            self._to_spin.setMaximum(self._pdf_manager.page_count)
+            self._to_spin.setValue(self._pdf_manager.page_count)
 
     def _get_config(self) -> OCRConfig:
         """Zwraca aktualną konfigurację OCR."""
@@ -514,11 +520,11 @@ class OCRPage(BasePage):
 
     def _get_pages_to_process(self) -> List[int]:
         """Zwraca listę stron do przetworzenia."""
-        if not self.pdf_manager:
+        if not self._pdf_manager:
             return []
 
         if self._all_pages_radio.isChecked():
-            return list(range(self.pdf_manager.page_count))
+            return list(range(self._pdf_manager.page_count))
         else:
             from_page = self._from_spin.value() - 1
             to_page = self._to_spin.value()
@@ -526,7 +532,7 @@ class OCRPage(BasePage):
 
     def _start_ocr(self) -> None:
         """Rozpoczyna proces OCR."""
-        if not self.pdf_manager or not self.pdf_manager._doc:
+        if not self._pdf_manager or not self._pdf_manager._doc:
             QMessageBox.warning(
                 self,
                 t("warning", "Ostrzeżenie"),
@@ -557,7 +563,7 @@ class OCRPage(BasePage):
 
         # Uruchom worker
         self._worker = OCRWorker(
-            self.pdf_manager._doc,
+            self._pdf_manager._doc,
             pages,
             config,
             api_key,
@@ -688,7 +694,7 @@ class OCRPage(BasePage):
             )
             return
 
-        if not self.pdf_manager or not self.pdf_manager._doc:
+        if not self._pdf_manager or not self._pdf_manager._doc:
             return
 
         # Wybierz plik
@@ -705,7 +711,7 @@ class OCRPage(BasePage):
         # Utwórz searchable PDF
         engine = OCREngine()
         pdf_bytes = engine.create_searchable_pdf(
-            self.pdf_manager._doc,
+            self._pdf_manager._doc,
             self._ocr_results,
         )
 

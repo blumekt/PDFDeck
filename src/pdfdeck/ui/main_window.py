@@ -199,7 +199,7 @@ class MainWindow(QMainWindow):
         self._stack.addWidget(automation_page)
 
         # Strona "OCR"
-        ocr_page = OCRPage(self)
+        ocr_page = OCRPage(self._pdf_manager)
         self._pages["ocr"] = ocr_page
         self._stack.addWidget(ocr_page)
 
@@ -275,6 +275,10 @@ class MainWindow(QMainWindow):
                     self._thumbnail_manager.signals.all_complete.connect(
                         self._on_thumbnails_complete
                     )
+                    # Połącz sygnał żądania odświeżenia miniatur
+                    pages_view.thumbnails_refresh_requested.connect(
+                        self._on_thumbnails_refresh_requested
+                    )
 
             # Powiadom widoki o załadowaniu dokumentu
             for page_id in ["pages", "redaction", "watermark", "tools", "security", "analysis", "automation", "ocr"]:
@@ -302,6 +306,11 @@ class MainWindow(QMainWindow):
     def _on_thumbnails_complete(self) -> None:
         """Zakończenie generowania miniatur."""
         self._statusbar.showMessage("Gotowy")
+
+    def _on_thumbnails_refresh_requested(self) -> None:
+        """Obsługa żądania regeneracji miniatur (np. po zmianie kolejności)."""
+        if self._thumbnail_manager:
+            self._thumbnail_manager.request_all_thumbnails(200)
 
     # === Events ===
 
