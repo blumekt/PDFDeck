@@ -1,130 +1,291 @@
-# Release Script - Instrukcja
+# Scripts - Uniwersalne narzędzia do aplikacji desktopowych
 
-Uniwersalny skrypt do automatyzacji wydawania nowych wersji aplikacji desktopowych Windows.
+Zestaw przenośnych skryptów Python do automatyzacji:
+- **Instalatora Windows** (PyInstaller + Inno Setup)
+- **Auto-Updatera** (sprawdzanie i pobieranie aktualizacji)
+- **Wydawania wersji** (build, release, upload)
 
-**Skopiuj cały katalog `scripts/` do nowego projektu - skrypt automatycznie skonfiguruje się na podstawie `pyproject.toml`.**
-
----
-
-## Szybki start
-
-```bash
-# 1. Sprawdź czy wszystko jest zainstalowane
-python scripts/release.py --check
-
-# 2. Napraw błędy (jeśli są)
-pip install pyinstaller packaging tomli
-winget install JRSoftware.InnoSetup
-gh auth login
-
-# 3. Wydaj nową wersję
-python scripts/release.py 1.0.0
-```
+**Skopiuj cały katalog `scripts/` do nowego projektu - skrypty automatycznie skonfigurują się na podstawie `pyproject.toml`.**
 
 ---
 
-## Wymagania
+## Spis treści
 
-### Oprogramowanie
-
-| Narzędzie | Instalacja | Opis |
-|-----------|------------|------|
-| **Python 3.9+** | python.org | Interpreter Pythona |
-| **Git** | `winget install Git.Git` | System kontroli wersji |
-| **GitHub CLI** | `winget install GitHub.cli` | Tworzenie release'ów |
-| **PyInstaller** | `pip install pyinstaller` | Budowanie .exe |
-| **Inno Setup 6** | `winget install JRSoftware.InnoSetup` | Budowanie instalatora |
-
-### Pakiety Python
-
-```bash
-pip install pyinstaller packaging tomli
-```
-
-| Pakiet | Wymagany | Opis |
-|--------|----------|------|
-| `pyinstaller` | Tak | Pakowanie aplikacji do .exe |
-| `packaging` | Tak | Porównywanie wersji (dla auto-update) |
-| `tomli` | Python < 3.11 | Parsowanie pyproject.toml |
-
-### Autentykacja GitHub
-
-```bash
-# Zaloguj się do GitHub CLI
-gh auth login
-
-# Jeśli brakuje uprawnień (repo, workflow)
-gh auth refresh -h github.com -s repo,workflow
-```
+1. [Quick Start - Nowy projekt od zera](#quick-start---nowy-projekt-od-zera)
+2. [Skrypty](#skrypty)
+   - [setup_installer.py](#1-setup_installerpy---inicjalizacja-instalatora)
+   - [setup_updater.py](#2-setup_updaterpy---inicjalizacja-auto-updatera)
+   - [release.py](#3-releasepy---wydawanie-wersji)
+3. [Konfiguracja pyproject.toml](#konfiguracja-pyprojecttoml)
+4. [Wymagania systemowe](#wymagania-systemowe)
+5. [Repozytoria GitHub](#repozytoria-github)
+6. [Rozwiązywanie problemów](#rozwiązywanie-problemów)
+7. [FAQ](#faq)
 
 ---
 
-## Konfiguracja projektu
+## Quick Start - Nowy projekt od zera
 
-### pyproject.toml
+### Krok 1: Skopiuj skrypty
 
-Dodaj sekcję `[tool.release]` lub `[tool.spectra]`:
+```bash
+# Skopiuj cały katalog scripts/ do nowego projektu
+cp -r scripts/ /path/to/new-project/scripts/
+```
+
+### Krok 2: Dodaj konfigurację do pyproject.toml
 
 ```toml
 [project]
 name = "myapp"
 version = "1.0.0"
 
+[tool.installer]
+app_name = "MyApp"
+app_id = "{XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}"
+publisher = "Your Name"
+description = "My awesome application"
+url = "https://github.com/username/myapp"
+releases_repo = "username/myapp-releases"
+ui_framework = "pyqt6"  # lub "customtkinter", "cli"
+icon_path = "assets/icon.ico"
+
+[tool.updater]
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
+ui_framework = "pyqt6"
+
 [tool.release]
-app_name = "MyApp"                           # Nazwa aplikacji
-releases_repo = "username/myapp-releases"    # Repo na GitHub dla release'ów
-installer_name = "MyApp_Setup_{version}.exe" # Nazwa instalatora
-spec_file = "myapp.spec"                     # Plik PyInstaller spec
-installer_iss = "installer/myapp_installer.iss"  # Plik Inno Setup
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
 ```
 
-### Wymagane pliki projektu
+### Krok 3: Sprawdź wymagania
 
+```bash
+# Sprawdź czy wszystko jest zainstalowane
+python scripts/setup_installer.py --check
+python scripts/setup_updater.py --check
+python scripts/release.py --check
 ```
-projekt/
-├── pyproject.toml              # Konfiguracja projektu (WYMAGANE)
-├── file_version_info.txt       # Metadane Windows EXE (WYMAGANE)
-├── myapp.spec                  # Konfiguracja PyInstaller
-├── installer/
-│   └── myapp_installer.iss     # Skrypt Inno Setup
-├── scripts/
-│   ├── release.py              # Ten skrypt
-│   └── README.md               # Ta instrukcja
-└── release/                    # Output (tworzony automatycznie)
-    ├── MyApp_Setup_1.0.0.exe
-    ├── latest.yml
-    └── beta.yml
+
+### Krok 4: Wygeneruj pliki
+
+```bash
+# 1. Wygeneruj pliki instalatora (spec, iss, version_info)
+python scripts/setup_installer.py --init
+
+# 2. Wygeneruj pliki auto-updatera (checker, downloader, dialog)
+python scripts/setup_updater.py --init
+
+# 3. Przejrzyj wygenerowane pliki i dostosuj do potrzeb
+```
+
+### Krok 5: Wydaj pierwszą wersję
+
+```bash
+# Wydaj wersję 1.0.0
+python scripts/release.py 1.0.0
 ```
 
 ---
 
-## Użycie
+## Skrypty
 
-### Sprawdzenie wymagań
+### 1. setup_installer.py - Inicjalizacja instalatora
+
+Generuje infrastrukturę do budowania instalatora Windows.
+
+#### Użycie
 
 ```bash
-python scripts/release.py --check
-python scripts/release.py -c
+# Sprawdź środowisko
+python scripts/setup_installer.py --check
+
+# Wygeneruj pliki instalatora
+python scripts/setup_installer.py --init
+
+# Symulacja (bez tworzenia plików)
+python scripts/setup_installer.py --init --dry-run
+
+# Nadpisz istniejące pliki
+python scripts/setup_installer.py --init --force
+
+# Override frameworka UI
+python scripts/setup_installer.py --init --framework customtkinter
 ```
 
-Sprawdza:
-- Wersję Pythona
-- Zainstalowane pakiety
-- Git i konfigurację repo
-- GitHub CLI i autentykację
-- PyInstaller
-- Inno Setup
-- Wymagane pliki projektu
-- Konfigurację w pyproject.toml
-- Istnienie releases repo
+#### Generowane pliki
 
-### Wydanie wersji
+| Plik | Opis |
+|------|------|
+| `{app}.spec` | Konfiguracja PyInstaller - jak budować .exe |
+| `file_version_info.txt` | Metadane Windows (wersja, wydawca, copyright) |
+| `installer/{app}_installer.iss` | Skrypt Inno Setup - jak budować instalator |
+| `installer/` | Katalog na skrypty instalatora |
+| `release/` | Katalog na gotowe instalatory |
+
+#### Konfiguracja [tool.installer]
+
+```toml
+[tool.installer]
+# WYMAGANE
+app_name = "MyApp"              # Nazwa aplikacji (wyświetlana)
+
+# OPCJONALNE (z sensownymi domyślnymi)
+app_id = "{GUID}"               # Unikalny ID dla Inno Setup (auto-generowany)
+publisher = "Unknown"           # Nazwa wydawcy
+description = ""                # Opis aplikacji
+url = ""                        # Strona projektu
+releases_repo = ""              # Repo na GitHub dla release'ów
+
+# UI Framework (wpływa na hidden imports)
+ui_framework = "pyqt6"          # "pyqt6", "customtkinter", "cli"
+
+# Ścieżki
+entry_point = "main.py"         # Główny plik aplikacji (auto-wykrywany)
+icon_path = ""                  # Ścieżka do ikony .ico (auto-wykrywana)
+assets_dir = "assets"           # Katalog z zasobami
+installer_dir = "installer"     # Katalog na skrypt .iss
+release_dir = "release"         # Katalog na gotowe instalatory
+
+# Języki instalatora (Inno Setup)
+languages = ["english", "polish"]
+
+# Dodatkowe hidden imports dla PyInstaller
+hidden_imports = ["fitz", "pymupdf"]
+
+# Dodatkowe pliki do dołączenia
+data_files = ["resources", "config"]
+```
+
+#### Co sprawdza --check
+
+- ✅ Wersja Pythona (3.9+)
+- ✅ Konfiguracja w pyproject.toml
+- ✅ Struktura projektu (entry point, ikona)
+- ✅ PyInstaller zainstalowany
+- ✅ Inno Setup zainstalowany
+- ✅ Czy pliki już istnieją
+
+---
+
+### 2. setup_updater.py - Inicjalizacja auto-updatera
+
+Generuje system automatycznych aktualizacji dla aplikacji.
+
+#### Użycie
 
 ```bash
-# Wersja stabilna
+# Sprawdź środowisko
+python scripts/setup_updater.py --check
+
+# Wygeneruj pliki updatera
+python scripts/setup_updater.py --init
+
+# Testuj połączenie i parsowanie
+python scripts/setup_updater.py --test
+
+# Symulacja (bez tworzenia plików)
+python scripts/setup_updater.py --init --dry-run
+
+# Nadpisz istniejące pliki
+python scripts/setup_updater.py --init --force
+
+# Override frameworka UI
+python scripts/setup_updater.py --init --framework customtkinter
+```
+
+#### Generowane pliki
+
+| Plik | Opis |
+|------|------|
+| `src/{app}/core/updater/__init__.py` | Eksporty modułu |
+| `src/{app}/core/updater/models.py` | UpdateChannel, UpdateInfo, UpdateCheckResult |
+| `src/{app}/core/updater/update_checker.py` | Sprawdzanie dostępności aktualizacji |
+| `src/{app}/core/updater/update_downloader.py` | Pobieranie z weryfikacją SHA512 |
+| `src/{app}/core/updater/update_manager.py` | Koordynacja procesu |
+| `src/{app}/ui/dialogs/update_dialog.py` | Dialog aktualizacji (framework-specific) |
+
+#### Konfiguracja [tool.updater]
+
+```toml
+[tool.updater]
+# WYMAGANE
+app_name = "MyApp"                       # Nazwa aplikacji
+releases_repo = "username/myapp-releases" # Repo z plikami yml
+
+# OPCJONALNE
+ui_framework = "pyqt6"      # "pyqt6", "customtkinter", "cli"
+update_check_delay = 2000   # Opóźnienie sprawdzania (ms) po starcie
+channels = ["stable", "beta"]
+models_location = "separate" # "separate" (nowy plik) lub "existing" (istniejący models.py)
+```
+
+#### Co sprawdza --check
+
+- ✅ Wersja Pythona (3.9+)
+- ✅ Konfiguracja w pyproject.toml
+- ✅ Struktura projektu (src/{app}/core/)
+- ✅ Dostęp do GitHub (releases repo)
+- ✅ Istnienie latest.yml (info jeśli brak)
+- ✅ Zależności frameworka (PyQt6/customtkinter)
+- ✅ Czy pliki już istnieją
+
+#### Co sprawdza --test
+
+- ✅ Połączenie z releases repo
+- ✅ Pobieranie i parsowanie latest.yml
+- ✅ Logika porównywania wersji (stable vs beta)
+
+#### Integracja z aplikacją
+
+Po wygenerowaniu plików, skrypt pokazuje kod integracji:
+
+**PyQt6:**
+```python
+from PyQt6.QtCore import QTimer
+from myapp.core.updater import UpdateManager, UpdateChannel
+from myapp.ui.dialogs.update_dialog import UpdateDialog
+
+# W __init__:
+QTimer.singleShot(2000, self._check_for_updates)
+
+def _check_for_updates(self):
+    channel = self._load_update_channel()  # z settings.json
+    self._update_manager = UpdateManager(__version__, channel)
+    self._update_manager.check_complete.connect(self._on_update_check)
+    self._update_manager.check_for_updates()
+```
+
+**CustomTkinter:**
+```python
+# W __init__:
+self.after(2000, self._check_for_updates)
+```
+
+#### Ustawienia kanału aktualizacji
+
+Skrypt pokazuje też jak dodać wybór kanału (stable/beta) w ustawieniach aplikacji:
+- Zapis/odczyt z `~/.{app}/settings.json`
+- Przykładowy QComboBox (PyQt6) lub CTkOptionMenu (CustomTkinter)
+
+---
+
+### 3. release.py - Wydawanie wersji
+
+Automatyzuje cały proces wydawania nowej wersji aplikacji.
+
+#### Użycie
+
+```bash
+# Sprawdź wymagania
+python scripts/release.py --check
+
+# Wydaj wersję stabilną
 python scripts/release.py 1.0.0
 
-# Wersja beta
+# Wydaj wersję beta
 python scripts/release.py 1.0.0-beta.1
 
 # Symulacja (bez zmian)
@@ -134,288 +295,363 @@ python scripts/release.py 1.0.0 --dry-run
 python scripts/release.py 1.0.0 --force
 ```
 
-### Opcje
+#### Co robi skrypt (8 kroków)
 
-| Opcja | Skrót | Opis |
-|-------|-------|------|
-| `--check` | `-c` | Sprawdź wymagania |
-| `--dry-run` | `-d` | Symulacja bez zmian |
-| `--force` | `-f` | Pomiń potwierdzenia |
+| Krok | Opis |
+|------|------|
+| 1. Walidacja | Sprawdza format wersji, status git, narzędzia |
+| 2. Aktualizacja wersji | pyproject.toml, *.iss, file_version_info.txt |
+| 3. Build | PyInstaller → .exe, Inno Setup → installer |
+| 4. Generowanie YML | latest.yml i/lub beta.yml z SHA512 |
+| 5. Commit + Tag | `git commit` + `git tag vX.Y.Z` |
+| 6. Push | Do origin (source repo) |
+| 7. GitHub Release | Tworzy release w releases repo |
+| 8. Push YML | Pliki yml do main branch releases repo |
 
----
+#### Konfiguracja [tool.release]
 
-## Co robi skrypt
+```toml
+[tool.release]
+# WYMAGANE
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
 
-### Krok 1: Walidacja
-- Sprawdza format wersji (x.y.z lub x.y.z-beta.n)
-- Sprawdza czy tag nie istnieje
-- Sprawdza status git
-- Sprawdza GitHub CLI
-- Tworzy releases repo jeśli nie istnieje
-
-### Krok 2: Aktualizacja wersji
-Aktualizuje wersję w plikach:
-- `pyproject.toml` - `version = "x.y.z"`
-- `installer/*.iss` - `#define MyAppVersion "x.y.z"`
-- `file_version_info.txt` - `filevers=(x, y, z, 0)`
-
-### Krok 3: Build
-1. Czyści poprzedni build (`dist/`, `build/`)
-2. Uruchamia PyInstaller
-3. Uruchamia Inno Setup
-
-### Krok 4: Generowanie YML
-Tworzy pliki dla auto-update:
-- `release/latest.yml` - dla kanału stable
-- `release/beta.yml` - dla kanału beta
-
-Zawierają:
-- Wersję
-- Nazwę pliku instalatora
-- Hash SHA512 (base64)
-- Rozmiar pliku
-- Datę wydania
-
-### Krok 5: Commit i tag
-```bash
-git add pyproject.toml installer/*.iss file_version_info.txt release/*.yml
-git commit -m "release: v1.0.0"
-git tag -a "v1.0.0" -m "Release 1.0.0"
+# OPCJONALNE (auto-wykrywane)
+installer_name = "MyApp_Setup_{version}.exe"
+spec_file = "myapp.spec"
+installer_iss = "installer/myapp_installer.iss"
 ```
 
-### Krok 6: Push
-```bash
-git push origin
-git push origin v1.0.0
-```
-
-### Krok 7: GitHub Release
-- Tworzy release w repo `releases_repo`
-- Uploaduje instalator i pliki yml
-- Generuje automatyczne release notes
-
-### Krok 8: Push YML do releases repo
-- Klonuje releases repo
-- Kopiuje latest.yml i beta.yml
-- Commituje i pushuje
-
-**To jest kluczowe dla auto-update!** Pliki yml muszą być w branchu `main` releases repo, nie tylko jako assety release'u.
-
----
-
-## Auto-Update
-
-### Jak działa
-
-1. Aplikacja sprawdza `https://raw.githubusercontent.com/{releases_repo}/main/latest.yml`
-2. Porównuje wersję z aktualną
-3. Jeśli jest nowsza - pokazuje dialog
-4. Pobiera instalator z GitHub Release
-5. Weryfikuje SHA512
-6. Uruchamia instalator
-
-### Kanały aktualizacji
-
-| Kanał | Plik YML | Opis |
-|-------|----------|------|
-| Stable | `latest.yml` | Tylko stabilne wersje (x.y.z) |
-| Beta | `beta.yml` | Wszystkie wersje (w tym beta) |
-
-### Logika aktualizacji YML
+#### Kanały aktualizacji (Stable vs Beta)
 
 | Typ wydania | latest.yml | beta.yml |
 |-------------|------------|----------|
-| Stable (1.0.0) | Aktualizowany | Aktualizowany |
-| Beta (1.0.0-beta.1) | Bez zmian | Aktualizowany |
+| Stable (1.0.0) | ✅ Aktualizowany | ✅ Aktualizowany |
+| Beta (1.0.0-beta.1) | ❌ Bez zmian | ✅ Aktualizowany |
+
+Użytkownicy na kanale "stable" otrzymują tylko stabilne wersje.
+Użytkownicy na kanale "beta" otrzymują wszystkie wersje.
 
 ---
 
-## Repozytoria
+## Konfiguracja pyproject.toml
 
-**WAŻNE:** Ten skrypt wymaga **2 oddzielnych repozytoriów** na GitHub!
+### Pełna konfiguracja (wszystkie skrypty)
 
-| Repo                       | Przykład                   | Przeznaczenie              |
-|----------------------------|----------------------------|----------------------------|
-| **origin** (kod źródłowy)  | `username/myapp`           | Kod, commity, tagi         |
-| **releases** (instalatory) | `username/myapp-releases`  | GitHub Releases, pliki yml |
+```toml
+[project]
+name = "myapp"
+version = "1.0.0"
+description = "My awesome application"
+authors = [{name = "Your Name"}]
+
+[tool.installer]
+app_name = "MyApp"
+app_id = "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+publisher = "Your Name"
+description = "My awesome application"
+url = "https://github.com/username/myapp"
+releases_repo = "username/myapp-releases"
+ui_framework = "pyqt6"
+entry_point = "src/myapp/__main__.py"
+icon_path = "assets/myapp_icon.ico"
+assets_dir = "assets"
+installer_dir = "installer"
+release_dir = "release"
+languages = ["english", "polish", "german"]
+hidden_imports = []
+data_files = ["assets"]
+
+[tool.updater]
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
+ui_framework = "pyqt6"
+update_check_delay = 2000
+channels = ["stable", "beta"]
+
+[tool.release]
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
+installer_name = "MyApp_Setup_{version}.exe"
+spec_file = "myapp.spec"
+installer_iss = "installer/myapp_installer.iss"
+```
+
+### Minimalna konfiguracja
+
+```toml
+[project]
+name = "myapp"
+version = "1.0.0"
+
+[tool.installer]
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
+
+[tool.updater]
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
+
+[tool.release]
+app_name = "MyApp"
+releases_repo = "username/myapp-releases"
+```
+
+Wszystkie pozostałe wartości zostaną automatycznie wykryte lub użyte domyślne.
+
+---
+
+## Wymagania systemowe
+
+### Oprogramowanie
+
+| Narzędzie | Instalacja | Wymagane przez |
+|-----------|------------|----------------|
+| **Python 3.9+** | python.org | Wszystkie skrypty |
+| **Git** | `winget install Git.Git` | release.py |
+| **GitHub CLI** | `winget install GitHub.cli` | release.py |
+| **PyInstaller** | `pip install pyinstaller` | release.py |
+| **Inno Setup 6** | `winget install JRSoftware.InnoSetup` | release.py |
+
+### Pakiety Python
+
+```bash
+# Wymagane
+pip install packaging
+
+# Dla Python < 3.11
+pip install tomli
+
+# Dla budowania
+pip install pyinstaller
+
+# Zależnie od frameworka
+pip install PyQt6        # dla pyqt6
+pip install customtkinter # dla customtkinter
+```
+
+### Autentykacja GitHub
+
+```bash
+# Zaloguj się
+gh auth login
+
+# Dodaj uprawnienia jeśli brakuje
+gh auth refresh -h github.com -s repo,workflow
+```
+
+---
+
+## Repozytoria GitHub
 
 ### Dlaczego 2 repozytoria?
 
-1. **Separacja kodu od binarek** - repo z kodem pozostaje lekkie
-2. **Auto-update** - pliki `latest.yml`/`beta.yml` muszą być w głównym branchu releases repo
-3. **Bezpieczeństwo** - instalatory nie mieszają się z kodem źródłowym
+Skrypty wymagają **2 oddzielnych repozytoriów**:
 
-### Source repo (origin)
+| Repo | Przykład | Zawartość |
+|------|----------|-----------|
+| **Source** (origin) | `username/myapp` | Kod źródłowy, commity, tagi |
+| **Releases** | `username/myapp-releases` | Instalatory, latest.yml, beta.yml |
 
-- Kod źródłowy aplikacji
-- Commity i tagi wersji (`v1.0.0`)
-- **NIE** uploaduj instalatorów (.exe)
-- Konfiguracja: `git remote add origin https://github.com/username/myapp.git`
+**Powody:**
+1. **Separacja** - repo z kodem pozostaje lekkie (bez binarek)
+2. **Auto-update** - pliki yml muszą być w main branch releases repo
+3. **Bezpieczeństwo** - instalatory nie mieszają się z kodem
 
-### Releases repo
-
-- GitHub Releases z instalatorami
-- Pliki `latest.yml` i `beta.yml` w branchu `main` (dla auto-update)
-- **NIE** pushuj kodu źródłowego
-- Skrypt automatycznie tworzy to repo jeśli nie istnieje
-
----
-
-## Zakładanie repozytoriów
-
-### Opcja 1: Automatycznie (zalecane)
-
-Skrypt `release.py` automatycznie utworzy **releases repo** jeśli nie istnieje.
-
-Dla **source repo** użyj GitHub CLI:
+### Tworzenie repozytoriów
 
 ```bash
-# 1. Zainicjuj lokalne repo git
-git init
-
-# 2. Utwórz repo na GitHub i połącz
+# 1. Source repo (jeśli nie istnieje)
 gh repo create username/myapp --public --source=. --push
 
-# 3. Skonfiguruj releases_repo w pyproject.toml
-# [tool.release]
-# releases_repo = "username/myapp-releases"
-
-# 4. Uruchom release - utworzy releases repo automatycznie
-python scripts/release.py 1.0.0
-```
-
-### Opcja 2: Ręcznie
-
-```bash
-# 1. Utwórz source repo na github.com/new
-# Nazwa: myapp
-
-# 2. Utwórz releases repo na github.com/new
-# Nazwa: myapp-releases
-# Opis: "MyApp releases and auto-update files"
-
-# 3. Połącz lokalne repo z origin
-git init
-git remote add origin https://github.com/username/myapp.git
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git push -u origin main
-
-# 4. Skonfiguruj pyproject.toml
-# [tool.release]
-# releases_repo = "username/myapp-releases"
-```
-
-### Weryfikacja
-
-```bash
-# Sprawdź czy oba repozytoria są skonfigurowane
-python scripts/release.py --check
-```
-
-Powinno pokazać:
-
-```text
-[OK] Git remote 'origin': configured
-[OK] Releases repo 'username/myapp-releases': exists
+# 2. Releases repo (automatycznie przez release.py)
+# LUB ręcznie:
+gh repo create username/myapp-releases --public --description "MyApp releases"
 ```
 
 ---
 
 ## Rozwiązywanie problemów
 
-### "GitHub CLI not authenticated"
-```bash
-gh auth login
-```
+### setup_installer.py
 
-### "Missing GitHub scopes"
-```bash
-gh auth refresh -h github.com -s repo,workflow
-```
+| Problem | Rozwiązanie |
+|---------|-------------|
+| "PyInstaller not installed" | `pip install pyinstaller` |
+| "Inno Setup not found" | `winget install JRSoftware.InnoSetup` lub pobierz z jrsoftware.org |
+| "Entry point not found" | Sprawdź `entry_point` w [tool.installer] lub strukturę projektu |
+| "Icon not found" | Dodaj plik .ico lub ustaw `icon_path = ""` aby pominąć |
 
-### "Inno Setup not found"
-```bash
-winget install JRSoftware.InnoSetup
-```
-Lub pobierz z: https://jrsoftware.org/isdl.php
+### setup_updater.py
 
-### "PyInstaller not installed"
-```bash
-pip install pyinstaller
-```
+| Problem | Rozwiązanie |
+|---------|-------------|
+| "releases_repo not configured" | Dodaj `releases_repo` w [tool.updater] |
+| "src/{app}/core/ not found" | Utwórz strukturę katalogów lub sprawdź nazwę projektu |
+| "latest.yml not found" | Normalne dla nowych projektów - pojawi się po pierwszym release |
+| "PyQt6/customtkinter not installed" | `pip install PyQt6` lub `pip install customtkinter` |
 
-### "tomli required for Python < 3.11"
-```bash
-pip install tomli
-```
+### release.py
 
-### "Tag already exists"
-Tag `vX.Y.Z` już istnieje. Użyj innej wersji lub usuń tag:
-```bash
-git tag -d v1.0.0
-git push origin :refs/tags/v1.0.0
-```
+| Problem | Rozwiązanie |
+|---------|-------------|
+| "GitHub CLI not authenticated" | `gh auth login` |
+| "Missing GitHub scopes" | `gh auth refresh -h github.com -s repo,workflow` |
+| "Tag already exists" | Użyj innej wersji lub usuń tag: `git tag -d vX.Y.Z` |
+| "Build failed - PyInstaller" | Sprawdź logi: `build/{app}/warn-{app}.txt` |
+| "Build failed - Inno Setup" | Uruchom ręcznie: `ISCC.exe installer/{app}_installer.iss` |
 
-### "releases_repo not configured"
-Dodaj do `pyproject.toml`:
+### Ogólne
+
+| Problem | Rozwiązanie |
+|---------|-------------|
+| "tomli required" | `pip install tomli` (Python < 3.11) |
+| "Configuration error" | Sprawdź składnię pyproject.toml |
+| "Permission denied" | Uruchom jako administrator lub sprawdź uprawnienia plików |
+
+---
+
+## FAQ
+
+### Czy mogę użyć tylko jednego skryptu?
+
+Tak! Każdy skrypt działa niezależnie:
+- `setup_installer.py` - tylko pliki instalatora
+- `setup_updater.py` - tylko auto-updater
+- `release.py` - wymaga plików wygenerowanych przez setup_installer.py
+
+### Jakie frameworki UI są wspierane?
+
+| Framework | setup_installer.py | setup_updater.py |
+|-----------|-------------------|------------------|
+| PyQt6 | ✅ (QThread + Signals) | ✅ |
+| CustomTkinter | ✅ (threading.Thread) | ✅ |
+| CLI | ✅ (console mode) | ✅ (bez dialogu) |
+
+### Jak zmienić język instalatora?
+
+W pyproject.toml:
 ```toml
-[tool.release]
-releases_repo = "username/appname-releases"
+[tool.installer]
+languages = ["english", "polish", "german", "french"]
 ```
 
-### Build failed - PyInstaller
-- Sprawdź czy `spec_file` istnieje
-- Uruchom PyInstaller ręcznie: `python -m PyInstaller myapp.spec`
-- Sprawdź logi w `build/myapp/warn-myapp.txt`
+Dostępne: english, polish, german, french, spanish, italian, russian
 
-### Build failed - Inno Setup
-- Sprawdź czy `installer_iss` istnieje
-- Sprawdź czy Inno Setup jest zainstalowany
-- Uruchom ISCC ręcznie: `ISCC.exe installer/myapp_installer.iss`
+### Jak dodać własne hidden imports?
+
+```toml
+[tool.installer]
+hidden_imports = ["my_module", "another_module"]
+```
+
+### Jak zmienić katalog z instalatorami?
+
+```toml
+[tool.installer]
+release_dir = "dist/installers"
+```
+
+### Jak wyłączyć auto-update?
+
+Nie używaj `setup_updater.py` i nie dodawaj kodu sprawdzania aktualizacji.
+
+### Czy muszę mieć releases repo?
+
+Tak, jeśli chcesz:
+- Używać auto-updatera
+- Wydawać wersje przez release.py
+
+Nie, jeśli budujesz tylko lokalnie.
+
+### Jak zrobić release bez GitHub?
+
+```bash
+# Tylko build (bez uploadu)
+pyinstaller myapp.spec
+ISCC.exe installer/myapp_installer.iss
+# Instalator w: release/MyApp_Setup_X.Y.Z.exe
+```
 
 ---
 
-## Przenoszenie do nowego projektu
+## Struktura projektu (po inicjalizacji)
 
-1. **Skopiuj katalog `scripts/`** do nowego projektu
-
-2. **Dodaj konfigurację** do `pyproject.toml`:
-   ```toml
-   [tool.release]
-   app_name = "NowaAplikacja"
-   releases_repo = "username/nowaaplikacja-releases"
-   ```
-
-3. **Utwórz wymagane pliki**:
-   - `file_version_info.txt` - metadane Windows EXE
-   - `nowaaplikacja.spec` - konfiguracja PyInstaller
-   - `installer/nowaaplikacja_installer.iss` - skrypt Inno Setup
-
-4. **Sprawdź wymagania**:
-   ```bash
-   python scripts/release.py --check
-   ```
-
-5. **Napraw błędy** i wydaj pierwszą wersję:
-   ```bash
-   python scripts/release.py 1.0.0
-   ```
+```
+projekt/
+├── pyproject.toml              # Konfiguracja projektu
+├── myapp.spec                  # PyInstaller spec (wygenerowany)
+├── file_version_info.txt       # Metadane Windows (wygenerowany)
+├── installer/
+│   └── myapp_installer.iss     # Inno Setup (wygenerowany)
+├── release/
+│   ├── MyApp_Setup_1.0.0.exe   # Instalator (po release)
+│   ├── latest.yml              # Dla stable (po release)
+│   └── beta.yml                # Dla beta (po release)
+├── scripts/
+│   ├── README.md               # Ta dokumentacja
+│   ├── release.py              # Wydawanie wersji
+│   ├── setup_installer.py      # Inicjalizacja instalatora
+│   └── setup_updater.py        # Inicjalizacja auto-updatera
+├── src/
+│   └── myapp/
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── core/
+│       │   ├── models.py
+│       │   └── updater/        # (wygenerowany)
+│       │       ├── __init__.py
+│       │       ├── models.py
+│       │       ├── update_checker.py
+│       │       ├── update_downloader.py
+│       │       └── update_manager.py
+│       └── ui/
+│           └── dialogs/
+│               └── update_dialog.py  # (wygenerowany)
+└── assets/
+    └── myapp_icon.ico
+```
 
 ---
 
-## Struktura pliku YML
+## Workflow - od zera do release'u
 
-```yaml
-version: 1.0.0
-files:
-  - url: MyApp_Setup_1.0.0.exe
-    sha512: aZbLkld4HfSUq3Pqxg178mj3NmvEYzGin61sq0qmstTvMk70Of/+l+9+I7IBtJnoisSvV4kiGbUdIWeqr/B6pQ==
-    size: 19844635
-path: MyApp_Setup_1.0.0.exe
-sha512: aZbLkld4HfSUq3Pqxg178mj3NmvEYzGin61sq0qmstTvMk70Of/+l+9+I7IBtJnoisSvV4kiGbUdIWeqr/B6pQ==
-releaseDate: '2026-01-20T12:00:00.000000+00:00'
+```bash
+# 1. Nowy projekt
+mkdir myapp && cd myapp
+git init
+
+# 2. Skopiuj skrypty
+cp -r /path/to/scripts .
+
+# 3. Utwórz pyproject.toml z konfiguracją (patrz wyżej)
+
+# 4. Utwórz strukturę projektu
+mkdir -p src/myapp/core src/myapp/ui/dialogs assets
+
+# 5. Dodaj ikonę
+# assets/myapp_icon.ico
+
+# 6. Sprawdź i wygeneruj pliki instalatora
+python scripts/setup_installer.py --check
+python scripts/setup_installer.py --init
+
+# 7. Sprawdź i wygeneruj auto-updater
+python scripts/setup_updater.py --check
+python scripts/setup_updater.py --init
+
+# 8. Zintegruj auto-updater z aplikacją (patrz instrukcje z --init)
+
+# 9. Sprawdź release
+python scripts/release.py --check
+
+# 10. Utwórz repo na GitHub
+gh repo create username/myapp --public --source=. --push
+
+# 11. Wydaj pierwszą wersję
+python scripts/release.py 1.0.0
+
+# 12. Gotowe! Instalator w release/MyApp_Setup_1.0.0.exe
 ```
 
 ---

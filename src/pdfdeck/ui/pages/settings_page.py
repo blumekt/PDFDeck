@@ -12,7 +12,8 @@ from pathlib import Path
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QGroupBox, QMessageBox, QScrollArea, QFrame
+    QGroupBox, QMessageBox, QScrollArea, QFrame,
+    QLineEdit, QPushButton
 )
 from PyQt6.QtCore import Qt
 
@@ -110,6 +111,58 @@ class SettingsPage(BasePage):
 
         content_layout.addWidget(language_group)
 
+        # === Grupa: API Keys ===
+        api_group = QGroupBox("Klucze API")
+        api_group.setStyleSheet(self._group_style())
+        api_layout = QVBoxLayout(api_group)
+
+        # OCR.space API Key
+        ocr_desc = QLabel(
+            "Klucz API dla OCR.space (rozpoznawanie tekstu).\n\n"
+            "Darmowy klucz: 25,000 zapytań/miesiąc\n"
+            "Zarejestruj się na: https://ocr.space/ocrapi"
+        )
+        ocr_desc.setStyleSheet("color: #8892a0; font-size: 13px;")
+        ocr_desc.setWordWrap(True)
+        api_layout.addWidget(ocr_desc)
+
+        ocr_key_row = QHBoxLayout()
+        ocr_label = QLabel("OCR.space API Key:")
+        ocr_label.setStyleSheet("color: #8892a0;")
+        ocr_key_row.addWidget(ocr_label)
+
+        self._ocr_key_input = QLineEdit()
+        self._ocr_key_input.setPlaceholderText("Wpisz swój klucz API lub zostaw puste dla demo key")
+        self._ocr_key_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #0f1629;
+                border: 1px solid #2d3a50;
+                border-radius: 4px;
+                padding: 8px;
+                color: #ffffff;
+                min-width: 300px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #e0a800;
+            }
+        """)
+        self._ocr_key_input.textChanged.connect(self._on_ocr_key_changed)
+        ocr_key_row.addWidget(self._ocr_key_input)
+
+        save_btn = StyledButton("Zapisz", "primary")
+        save_btn.clicked.connect(self._save_settings)
+        ocr_key_row.addWidget(save_btn)
+
+        ocr_key_row.addStretch()
+        api_layout.addLayout(ocr_key_row)
+
+        # Status klucza
+        self._ocr_status_label = QLabel("")
+        self._ocr_status_label.setStyleSheet("color: #27ae60; font-size: 12px;")
+        api_layout.addWidget(self._ocr_status_label)
+
+        content_layout.addWidget(api_group)
+
         # === Grupa: Informacje ===
         info_group = QGroupBox("PDFDeck")
         info_group.setStyleSheet(self._group_style())
@@ -183,6 +236,15 @@ class SettingsPage(BasePage):
         # Tutaj można by odświeżyć teksty, ale wymaga przebudowy UI
         pass
 
+    def _on_ocr_key_changed(self, text: str) -> None:
+        """Obsługa zmiany klucza OCR."""
+        if text.strip():
+            self._ocr_status_label.setText("✓ Klucz API wpisany (pamiętaj o zapisaniu)")
+            self._ocr_status_label.setStyleSheet("color: #27ae60; font-size: 12px;")
+        else:
+            self._ocr_status_label.setText("ℹ Używany będzie demo key (ograniczony)")
+            self._ocr_status_label.setStyleSheet("color: #e0a800; font-size: 12px;")
+
     def _load_settings(self) -> None:
         """Ładuje ustawienia z pliku."""
         if self._config_path.exists():
@@ -200,20 +262,52 @@ class SettingsPage(BasePage):
                         self._language_combo.setCurrentIndex(idx)
                         self._language_combo.blockSignals(False)
 
+                # Załaduj klucz OCR
+                ocr_key = settings.get("ocr_api_key", "")
+                if ocr_key:
+                    self._ocr_key_input.setText(ocr_key)
+
             except Exception as e:
                 print(f"Błąd ładowania ustawień: {e}")
 
     def _save_settings(self) -> None:
         """Zapisuje ustawienia do pliku."""
         settings = {
-            "language": self._i18n.current_language
+            "language": self._i18n.current_language,
+            "ocr_api_key": self._ocr_key_input.text().strip()
         }
 
         try:
             with open(self._config_path, "w", encoding="utf-8") as f:
                 json.dump(settings, f, indent=2)
+
+            QMessageBox.information(
+                self,
+                "Sukces",
+                "Ustawienia zostały zapisane!"
+            )
         except Exception as e:
             print(f"Błąd zapisywania ustawień: {e}")
+            QMessageBox.critical(
+                self,
+                "Błąd",
+                f"Nie można zapisać ustawień:\n{e}"
+            )
+
+    @staticmethod
+    def get_ocr_api_key() -> str:
+        """Zwraca zapisany klucz API OCR lub demo key."""
+        config_path = Path.home() / ".pdfdeck" / "settings.json"
+
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    settings = json.load(f)
+                    return settings.get("ocr_api_key", "helloworld")
+            except Exception:
+                pass
+
+        return "helloworld"  # Demo key
 
     # === Public API ===
 

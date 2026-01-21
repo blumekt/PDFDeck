@@ -25,6 +25,7 @@ from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.styled_button import StyledButton
 from pdfdeck.ui.widgets.styled_combo import StyledComboBox
 from pdfdeck.core.diff_engine import DiffEngine
+from pdfdeck.core.invoice_parser import InvoiceParser, InvoiceData
 
 if TYPE_CHECKING:
     from pdfdeck.core.pdf_manager import PDFManager
@@ -53,8 +54,10 @@ class AnalysisPage(BasePage):
         self._pdf_manager = pdf_manager
         self._current_tables: List = []
         self._diff_engine = DiffEngine()
+        self._invoice_parser = InvoiceParser()
         self._diff_path_a: Path = None
         self._diff_path_b: Path = None
+        self._invoice_results: List = []
         self._setup_analysis_ui()
 
     def _setup_analysis_ui(self) -> None:
@@ -239,6 +242,10 @@ class AnalysisPage(BasePage):
         diff_tab = self._create_diff_tab()
         tabs.addTab(diff_tab, "Visual Diff")
 
+        # Tab 3: Invoice Parser
+        invoice_tab = self._create_invoice_tab()
+        tabs.addTab(invoice_tab, "Parser faktur")
+
         self.add_widget(tabs)
 
     def _create_diff_tab(self) -> QWidget:
@@ -401,6 +408,312 @@ class AnalysisPage(BasePage):
         group.image_label = image_label
 
         return group
+
+    def _create_invoice_tab(self) -> QWidget:
+        """Tworzy zakładkę parsera faktur."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        # Opis
+        desc = QLabel(
+            "Automatyczna ekstrakcja danych z polskich faktur PDF.\n"
+            "Rozpoznawane pola: NIP, kwoty, daty, dane sprzedawcy i nabywcy."
+        )
+        desc.setStyleSheet("color: #8892a0; font-size: 13px; margin-bottom: 10px;")
+        layout.addWidget(desc)
+
+        # Przyciski
+        btn_row = QHBoxLayout()
+
+        self._parse_current_btn = StyledButton("Parsuj aktualny dokument", "primary")
+        self._parse_current_btn.clicked.connect(self._on_parse_current_invoice)
+        btn_row.addWidget(self._parse_current_btn)
+
+        self._parse_batch_btn = StyledButton("Batch - wiele faktur", "secondary")
+        self._parse_batch_btn.clicked.connect(self._on_parse_batch_invoices)
+        btn_row.addWidget(self._parse_batch_btn)
+
+        btn_row.addStretch()
+
+        self._export_invoice_btn = StyledButton("Eksportuj CSV", "secondary")
+        self._export_invoice_btn.clicked.connect(self._on_export_invoices)
+        self._export_invoice_btn.setEnabled(False)
+        btn_row.addWidget(self._export_invoice_btn)
+
+        layout.addLayout(btn_row)
+
+        # Splitter
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setStyleSheet("""
+            QSplitter::handle {
+                background-color: #2d3a50;
+                width: 2px;
+            }
+        """)
+
+        # Lista faktur
+        list_group = QGroupBox("Przetworzone faktury")
+        list_group.setStyleSheet(self._group_style())
+        list_layout = QVBoxLayout(list_group)
+
+        self._invoice_list = QListWidget()
+        self._invoice_list.setStyleSheet("""
+            QListWidget {
+                background-color: #0f1629;
+                border: 1px solid #2d3a50;
+                border-radius: 6px;
+            }
+            QListWidget::item {
+                padding: 10px;
+                border-bottom: 1px solid #2d3a50;
+                color: #ffffff;
+            }
+            QListWidget::item:selected {
+                background-color: #e0a800;
+                color: #1a1a2e;
+            }
+        """)
+        self._invoice_list.currentRowChanged.connect(self._on_invoice_selected)
+        list_layout.addWidget(self._invoice_list)
+
+        splitter.addWidget(list_group)
+
+        # Szczegóły faktury
+        details_group = QGroupBox("Szczegóły faktury")
+        details_group.setStyleSheet(self._group_style())
+        details_layout = QVBoxLayout(details_group)
+
+        # Tabela z danymi
+        self._invoice_table = QTableWidget()
+        self._invoice_table.setColumnCount(2)
+        self._invoice_table.setHorizontalHeaderLabels(["Pole", "Wartość"])
+        self._invoice_table.setStyleSheet("""
+            QTableWidget {
+                background-color: #0f1629;
+                border: 1px solid #2d3a50;
+                border-radius: 6px;
+                gridline-color: #2d3a50;
+            }
+            QTableWidget::item {
+                padding: 8px;
+                color: #ffffff;
+            }
+            QHeaderView::section {
+                background-color: #1f2940;
+                color: #8892a0;
+                padding: 8px;
+                border: none;
+            }
+        """)
+        self._invoice_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self._invoice_table.horizontalHeader().setStretchLastSection(True)
+        self._invoice_table.verticalHeader().setVisible(False)
+        details_layout.addWidget(self._invoice_table)
+
+        # Ostrzeżenia
+        self._invoice_warnings = QLabel()
+        self._invoice_warnings.setStyleSheet(
+            "color: #f39c12; font-size: 12px; padding: 5px;"
+        )
+        self._invoice_warnings.setWordWrap(True)
+        details_layout.addWidget(self._invoice_warnings)
+
+        splitter.addWidget(details_group)
+        splitter.setSizes([300, 500])
+
+        layout.addWidget(splitter, 1)
+
+        return tab
+
+    def _on_parse_current_invoice(self) -> None:
+        """Parsuje aktualnie otwarty dokument jako fakturę."""
+        if not self._pdf_manager.is_loaded:
+            QMessageBox.warning(self, "Błąd", "Najpierw otwórz dokument PDF")
+            return
+
+        try:
+            filepath = Path(self._pdf_manager._filepath)
+            result = self._invoice_parser.parse(filepath)
+
+            self._invoice_results = [result]
+            self._update_invoice_list()
+
+            if result.success:
+                self._invoice_list.setCurrentRow(0)
+
+                if result.warnings:
+                    QMessageBox.warning(
+                        self, "Uwagi",
+                        "Parsowanie zakończone z uwagami:\n\n" +
+                        "\n".join(f"• {w}" for w in result.warnings)
+                    )
+            else:
+                QMessageBox.critical(
+                    self, "Błąd",
+                    "Nie udało się sparsować faktury:\n\n" +
+                    "\n".join(result.errors)
+                )
+
+        except Exception as e:
+            QMessageBox.critical(self, "Błąd", f"Błąd parsowania:\n{e}")
+
+    def _on_parse_batch_invoices(self) -> None:
+        """Parsuje wiele faktur."""
+        filepaths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Wybierz faktury PDF",
+            "",
+            "Pliki PDF (*.pdf)"
+        )
+
+        if not filepaths:
+            return
+
+        try:
+            pdf_paths = [Path(f) for f in filepaths]
+            results = self._invoice_parser.batch_parse(pdf_paths)
+
+            self._invoice_results = results
+            self._update_invoice_list()
+
+            # Statystyki
+            success_count = sum(1 for r in results if r.success)
+            fail_count = len(results) - success_count
+
+            QMessageBox.information(
+                self, "Batch zakończony",
+                f"Przetworzono {len(results)} faktur:\n"
+                f"• Sukces: {success_count}\n"
+                f"• Błędy: {fail_count}"
+            )
+
+            self._export_invoice_btn.setEnabled(success_count > 0)
+
+            if results:
+                self._invoice_list.setCurrentRow(0)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Błąd", f"Błąd batch:\n{e}")
+
+    def _update_invoice_list(self) -> None:
+        """Aktualizuje listę faktur."""
+        self._invoice_list.clear()
+
+        for result in self._invoice_results:
+            if result.success and result.data:
+                data = result.data
+                confidence_icon = "✓" if data.confidence >= 70 else "⚠" if data.confidence >= 40 else "?"
+
+                text = (
+                    f"{confidence_icon} {data.invoice_number or 'Brak numeru'} | "
+                    f"{data.gross_amount:.2f} {data.currency} | "
+                    f"{data.issue_date or 'Brak daty'}"
+                )
+                item = QListWidgetItem(text)
+
+                if data.confidence >= 70:
+                    item.setForeground(Qt.GlobalColor.green)
+                elif data.confidence >= 40:
+                    item.setForeground(Qt.GlobalColor.yellow)
+                else:
+                    item.setForeground(Qt.GlobalColor.red)
+            else:
+                text = f"❌ {result.errors[0] if result.errors else 'Błąd'}"
+                item = QListWidgetItem(text)
+                item.setForeground(Qt.GlobalColor.red)
+
+            self._invoice_list.addItem(item)
+
+    def _on_invoice_selected(self, row: int) -> None:
+        """Obsługa wyboru faktury."""
+        if row < 0 or row >= len(self._invoice_results):
+            self._invoice_table.setRowCount(0)
+            self._invoice_warnings.clear()
+            return
+
+        result = self._invoice_results[row]
+
+        if not result.success or not result.data:
+            self._invoice_table.setRowCount(1)
+            self._invoice_table.setItem(0, 0, QTableWidgetItem("Błąd"))
+            self._invoice_table.setItem(
+                0, 1, QTableWidgetItem(result.errors[0] if result.errors else "Nieznany błąd")
+            )
+            self._invoice_warnings.clear()
+            return
+
+        data = result.data
+
+        # Wypełnij tabelę
+        fields = [
+            ("Numer faktury", data.invoice_number),
+            ("Data wystawienia", data.issue_date),
+            ("Data sprzedaży", data.sale_date),
+            ("Termin płatności", data.due_date),
+            ("", ""),  # separator
+            ("NIP sprzedawcy", data.seller_nip),
+            ("Sprzedawca", data.seller_name),
+            ("NIP nabywcy", data.buyer_nip),
+            ("Nabywca", data.buyer_name),
+            ("", ""),  # separator
+            ("Kwota netto", f"{data.net_amount:.2f} {data.currency}"),
+            ("Kwota VAT", f"{data.vat_amount:.2f} {data.currency}"),
+            ("Kwota brutto", f"{data.gross_amount:.2f} {data.currency}"),
+            ("", ""),  # separator
+            ("Metoda płatności", data.payment_method),
+            ("Konto bankowe", data.seller_bank_account),
+            ("", ""),  # separator
+            ("Pewność ekstrakcji", f"{data.confidence:.1f}%"),
+            ("Plik źródłowy", data.source_file),
+        ]
+
+        self._invoice_table.setRowCount(len(fields))
+
+        for i, (field, value) in enumerate(fields):
+            field_item = QTableWidgetItem(field)
+            field_item.setForeground(Qt.GlobalColor.gray)
+            self._invoice_table.setItem(i, 0, field_item)
+
+            value_item = QTableWidgetItem(str(value) if value else "-")
+            self._invoice_table.setItem(i, 1, value_item)
+
+        self._invoice_table.resizeColumnToContents(0)
+
+        # Ostrzeżenia
+        if result.warnings:
+            self._invoice_warnings.setText(
+                "Uwagi:\n" + "\n".join(f"• {w}" for w in result.warnings)
+            )
+        else:
+            self._invoice_warnings.clear()
+
+    def _on_export_invoices(self) -> None:
+        """Eksportuje faktury do CSV."""
+        if not self._invoice_results:
+            return
+
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Zapisz jako CSV",
+            "faktury.csv",
+            "Pliki CSV (*.csv)"
+        )
+
+        if filepath:
+            try:
+                self._invoice_parser.export_batch_csv(
+                    self._invoice_results,
+                    Path(filepath)
+                )
+
+                QMessageBox.information(
+                    self, "Sukces",
+                    f"Faktury wyeksportowane:\n{filepath}"
+                )
+
+            except Exception as e:
+                QMessageBox.critical(self, "Błąd", f"Błąd eksportu:\n{e}")
 
     def _on_select_diff_file_a(self) -> None:
         """Wybór dokumentu A do porównania."""

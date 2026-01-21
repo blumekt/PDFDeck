@@ -80,6 +80,8 @@ class Sidebar(QWidget):
         ("security", "Bezpieczeństwo", "security.png"),
         ("analysis", "Analiza", "analysis.png"),
         ("automation", "Automatyzacja", "automation.png"),
+        ("ocr", "OCR", "ocr.png"),
+        ("watchfolder", "Watch Folder", "watchfolder.png"),
         ("settings", "Ustawienia", "settings.png"),
     ]
 

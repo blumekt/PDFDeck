@@ -17,6 +17,7 @@ from PyQt6.QtCore import Qt
 
 from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.styled_button import StyledButton
+from pdfdeck.core.document_classifier import DocumentClassifier, ClassificationResult
 
 if TYPE_CHECKING:
     from pdfdeck.core.pdf_manager import PDFManager
@@ -44,6 +45,8 @@ class AutomationPage(BasePage):
 
         self._pdf_manager = pdf_manager
         self._headings: List = []
+        self._classifier = DocumentClassifier()
+        self._classification_result: ClassificationResult = None
         self._setup_automation_ui()
 
     def _setup_automation_ui(self) -> None:
@@ -100,6 +103,54 @@ class AutomationPage(BasePage):
         stats_layout.addWidget(self._stats_label)
 
         actions_layout.addWidget(stats_group)
+
+        # --- Document Classifier ---
+        classifier_group = QGroupBox("Klasyfikator dokumentów")
+        classifier_group.setStyleSheet(self._group_style())
+        classifier_layout = QVBoxLayout(classifier_group)
+
+        classifier_desc = QLabel(
+            "Automatycznie rozpoznaje typ dokumentu\n"
+            "i sugeruje nazwę pliku.\n\n"
+            "Kategorie: faktura, umowa, CV, raport,\n"
+            "pismo urzędowe, oferta, inne"
+        )
+        classifier_desc.setStyleSheet("color: #8892a0; font-size: 13px;")
+        classifier_layout.addWidget(classifier_desc)
+
+        self._classify_btn = StyledButton("Klasyfikuj dokument", "primary")
+        self._classify_btn.clicked.connect(self._on_classify_document)
+        classifier_layout.addWidget(self._classify_btn)
+
+        # Wynik klasyfikacji
+        self._classification_label = QLabel("")
+        self._classification_label.setStyleSheet(
+            "color: #e0a800; font-size: 12px; "
+            "background-color: #0f1629; padding: 10px; border-radius: 4px;"
+        )
+        self._classification_label.setWordWrap(True)
+        self._classification_label.setVisible(False)
+        classifier_layout.addWidget(self._classification_label)
+
+        # Sugerowana nazwa
+        self._suggested_name_label = QLabel("")
+        self._suggested_name_label.setStyleSheet(
+            "color: #8892a0; font-size: 11px;"
+        )
+        self._suggested_name_label.setWordWrap(True)
+        self._suggested_name_label.setVisible(False)
+        classifier_layout.addWidget(self._suggested_name_label)
+
+        # Tagi
+        self._tags_label = QLabel("")
+        self._tags_label.setStyleSheet(
+            "color: #27ae60; font-size: 11px;"
+        )
+        self._tags_label.setWordWrap(True)
+        self._tags_label.setVisible(False)
+        classifier_layout.addWidget(self._tags_label)
+
+        actions_layout.addWidget(classifier_group)
         actions_layout.addStretch()
 
         main_layout.addWidget(actions_widget)
@@ -228,6 +279,74 @@ class AutomationPage(BasePage):
 
         except Exception as e:
             QMessageBox.critical(self, "Błąd", f"Błąd podczas generowania:\n{e}")
+
+    def _on_classify_document(self) -> None:
+        """Klasyfikuje aktualnie otwarty dokument."""
+        if not self._pdf_manager.is_loaded:
+            QMessageBox.warning(self, "Błąd", "Najpierw otwórz dokument PDF")
+            return
+
+        try:
+            from pathlib import Path
+
+            filepath = Path(self._pdf_manager._filepath)
+            result = self._classifier.classify(filepath)
+
+            self._classification_result = result
+
+            # Wyświetl wynik
+            category_desc = DocumentClassifier.get_category_descriptions()
+            confidence_icon = "✓" if result.confidence >= 0.7 else "⚠" if result.confidence >= 0.4 else "?"
+
+            classification_text = (
+                f"{confidence_icon} <b>Kategoria:</b> {result.category}<br>"
+                f"<b>Opis:</b> {category_desc.get(result.category, 'Brak opisu')}<br>"
+                f"<b>Pewność:</b> {result.confidence * 100:.1f}%"
+            )
+
+            self._classification_label.setText(classification_text)
+            self._classification_label.setVisible(True)
+
+            # Sugerowana nazwa
+            self._suggested_name_label.setText(
+                f"Sugerowana nazwa: <b>{result.suggested_filename}</b>"
+            )
+            self._suggested_name_label.setVisible(True)
+
+            # Tagi
+            self._tags_label.setText(
+                f"Tagi: {', '.join(result.tags)}"
+            )
+            self._tags_label.setVisible(True)
+
+            # Pokaż wszystkie wyniki
+            if result.confidence < 0.7:
+                scores_text = "Inne możliwe kategorie:\n"
+                sorted_scores = sorted(
+                    result.all_scores.items(),
+                    key=lambda x: x[1],
+                    reverse=True
+                )
+                for cat, score in sorted_scores[:3]:
+                    if cat != result.category:
+                        scores_text += f"  • {cat}: {score * 100:.1f}%\n"
+
+                QMessageBox.information(
+                    self, "Klasyfikacja",
+                    f"Dokument sklasyfikowany jako: {result.category}\n"
+                    f"Pewność: {result.confidence * 100:.1f}%\n\n"
+                    f"{scores_text}"
+                )
+            else:
+                QMessageBox.information(
+                    self, "Klasyfikacja",
+                    f"Dokument sklasyfikowany jako: {result.category}\n"
+                    f"Pewność: {result.confidence * 100:.1f}%\n"
+                    f"Sugerowana nazwa: {result.suggested_filename}"
+                )
+
+        except Exception as e:
+            QMessageBox.critical(self, "Błąd", f"Błąd klasyfikacji:\n{e}")
 
     def _update_stats(self) -> None:
         """Aktualizuje statystyki dokumentu."""

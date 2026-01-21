@@ -156,6 +156,8 @@ class MainWindow(QMainWindow):
         from pdfdeck.ui.pages.tools_page import ToolsPage
         from pdfdeck.ui.pages.analysis_page import AnalysisPage
         from pdfdeck.ui.pages.automation_page import AutomationPage
+        from pdfdeck.ui.pages.ocr_page import OCRPage
+        from pdfdeck.ui.pages.watch_folder_page import WatchFolderPage
         from pdfdeck.ui.pages.settings_page import SettingsPage
 
         # Mapa stron
@@ -195,6 +197,16 @@ class MainWindow(QMainWindow):
         automation_page = AutomationPage(self._pdf_manager)
         self._pages["automation"] = automation_page
         self._stack.addWidget(automation_page)
+
+        # Strona "OCR"
+        ocr_page = OCRPage(self)
+        self._pages["ocr"] = ocr_page
+        self._stack.addWidget(ocr_page)
+
+        # Strona "Watch Folder"
+        watchfolder_page = WatchFolderPage(self)
+        self._pages["watchfolder"] = watchfolder_page
+        self._stack.addWidget(watchfolder_page)
 
         # Strona "Ustawienia"
         settings_page = SettingsPage(self._pdf_manager)
@@ -265,7 +277,7 @@ class MainWindow(QMainWindow):
                     )
 
             # Powiadom widoki o załadowaniu dokumentu
-            for page_id in ["pages", "redaction", "watermark", "tools", "security", "analysis", "automation"]:
+            for page_id in ["pages", "redaction", "watermark", "tools", "security", "analysis", "automation", "ocr"]:
                 if page_id in self._pages:
                     self._pages[page_id].on_document_loaded()
 

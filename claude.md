@@ -270,12 +270,35 @@ python scripts/release.py 1.0.0 --force
 5. Napisz testy jeśli to możliwe
 6. Commituj zmiany
 
+## Configuration
+
+### OCR API Key
+
+PDFDeck używa OCR.space API do rozpoznawania tekstu. Domyślnie używany jest demo key `"helloworld"` który ma bardzo ograniczone limity.
+
+**Jak uzyskać własny darmowy klucz API:**
+
+1. Odwiedź <https://ocr.space/ocrapi>
+2. Zarejestruj się (darmowe konto daje 25,000 zapytań/miesiąc)
+3. Skopiuj swój klucz API
+4. W PDFDeck:
+   - Przejdź do **Ustawienia** (sidebar)
+   - W sekcji "Klucze API" wpisz swój klucz
+   - Kliknij **Zapisz**
+
+**Gdzie jest przechowywany klucz:**
+
+- Windows: `C:\Users\<username>\.pdfdeck\settings.json`
+- Linux/Mac: `~/.pdfdeck/settings.json`
+
+Klucz jest automatycznie ładowany przy każdym uruchomieniu aplikacji i używany w funkcji OCR.
+
 ## Application Metadata
 
-| Property    | Value               |
-|-------------|---------------------|
-| Name        | PDFDeck             |
-| Version     | 0.1.0 (Alpha)       |
-| Author      | PDFDeck Team        |
-| License     | MIT                 |
-| Entry Point | `pdfdeck.__main__:main` |
+| Property    | Value                       |
+|-------------|-----------------------------|
+| Name        | PDFDeck                     |
+| Version     | 0.1.0 (Alpha)               |
+| Author      | PDFDeck Team                |
+| License     | MIT                         |
+| Entry Point | `pdfdeck.__main__:main`     |

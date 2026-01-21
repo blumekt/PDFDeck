@@ -36,6 +36,7 @@ dev = [
 
 [project.scripts]
 pdfdeck = "pdfdeck.__main__:main"
+pdfdeck-cli = "pdfdeck.cli:main"
 
 [project.gui-scripts]
 pdfdeck-gui = "pdfdeck.__main__:main"
@@ -70,3 +71,37 @@ releases_repo = "blumekt/PDFDeck-releases"
 installer_name = "PDFDeck_Setup_{version}.exe"
 spec_file = "pdfdeck.spec"
 installer_iss = "installer/pdfdeck_installer.iss"
+
+[tool.installer]
+app_name = "PDFDeck"
+app_id = "{A7B8C9D0-E1F2-3456-7890-ABCDEF123456}"
+publisher = "PDFDeck Team"
+description = "Zaawansowana aplikacja do manipulacji PDF"
+url = "https://github.com/blumekt/PDFDeck"
+releases_repo = "blumekt/PDFDeck-releases"
+ui_framework = "pyqt6"
+entry_point = "src/pdfdeck/__main__.py"
+icon_path = "resources/icons/pdfdeck.ico"
+assets_dir = "resources"
+installer_dir = "installer"
+release_dir = "release"
+languages = ["english", "polish", "german"]
+hidden_imports = ["fitz", "pymupdf"]
+data_files = ["resources"]
+
+[tool.updater]
+app_name = "PDFDeck"
+releases_repo = "blumekt/PDFDeck-releases"
+ui_framework = "pyqt6"
+update_check_delay = 2000
+channels = ["stable", "beta"]
+
+[tool.i18n]
+app_name = "PDFDeck"
+default_language = "en"
+supported_languages = ["en", "pl", "de", "fr"]
+translations_dir = "resources/translations"
+i18n_module = "src/pdfdeck/utils/i18n.py"
+source_dirs = ["src/pdfdeck/ui"]
+fallback_language = "en"
+key_separator = "."
