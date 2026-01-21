@@ -809,11 +809,33 @@ class PDFManager:
             size = max(width, height)
             width = height = size
 
+        # Oblicz pozycję na podstawie narożnika
+        rect = page.rect
+        margin = 20  # Margines od krawędzi
+        
+        if config.corner == "top-left":
+            x, y = margin, margin
+        elif config.corner == "top-center":
+            x, y = rect.width / 2 - width / 2, margin
+        elif config.corner == "top-right":
+            x, y = rect.width - width - margin, margin
+        elif config.corner == "center":
+            x, y = rect.width / 2 - width / 2, rect.height / 2 - height / 2
+        elif config.corner == "bottom-left":
+            x, y = margin, rect.height - height - margin
+        elif config.corner == "bottom-center":
+            x, y = rect.width / 2 - width / 2, rect.height - height - margin
+        elif config.corner == "bottom-right":
+            x, y = rect.width - width - margin, rect.height - height - margin
+        else:
+            # Fallback na custom position
+            x, y = config.position.x, config.position.y
+
         stamp_rect = pymupdf.Rect(
-            config.position.x,
-            config.position.y,
-            config.position.x + width,
-            config.position.y + height,
+            x,
+            y,
+            x + width,
+            y + height,
         )
 
         if config.stamp_path:
@@ -827,6 +849,23 @@ class PDFManager:
             # Dynamiczne generowanie - zawsze PNG
             renderer = StampRenderer()
             png_data = renderer.render_to_png(config)
+
+            # Obsłuż rotację za pomocą PIL jeśli jest inna niż 0, 90, 180, 270
+            if config.rotation not in (0, 90, 180, 270):
+                from PIL import Image
+                import io
+                
+                # Wczytaj obraz
+                img = Image.open(io.BytesIO(png_data))
+                # Obróć obraz
+                img = img.rotate(config.rotation, expand=True, resample=Image.Resampling.BICUBIC)
+                # Konwertuj z powrotem na bytes
+                buffer = io.BytesIO()
+                img.save(buffer, format="PNG")
+                png_data = buffer.getvalue()
+                rotation = 0  # Już obrócony przez PIL
+            else:
+                rotation = int(config.rotation) % 360
 
             # Zapisz do tymczasowego pliku (PyMuPDF lepiej obsługuje pliki)
             import tempfile

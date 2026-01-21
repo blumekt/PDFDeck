@@ -287,6 +287,7 @@ class StampPicker(QWidget):
         self._circular_text: str = ""
         self._size: int = 48
         self._rotation: float = 0
+        self._corner: str = "center"  # Nowy parametr
         self._opacity: float = 1.0
         self._shape: StampShape = StampShape.RECTANGLE
         self._border_style: BorderStyle = BorderStyle.SOLID
@@ -520,7 +521,25 @@ class StampPicker(QWidget):
         rotation_row.addWidget(self._rotation_value)
         settings_layout.addLayout(rotation_row)
 
-        layout.addWidget(settings_group)
+        # Narożnik
+        corner_row = QHBoxLayout()
+        corner_label = QLabel("Narożnik:")
+        corner_label.setStyleSheet("color: #8892a0;")
+        corner_label.setFixedWidth(100)
+        corner_row.addWidget(corner_label)
+
+        self._corner_combo = _styled_combo()
+        self._corner_combo.addItem("Środek", "center")
+        self._corner_combo.addItem("Górny lewy", "top-left")
+        self._corner_combo.addItem("Górny środek", "top-center")
+        self._corner_combo.addItem("Górny prawy", "top-right")
+        self._corner_combo.addItem("Dolny lewy", "bottom-left")
+        self._corner_combo.addItem("Dolny środek", "bottom-center")
+        self._corner_combo.addItem("Dolny prawy", "bottom-right")
+        self._corner_combo.currentIndexChanged.connect(self._update_preview)
+        corner_row.addWidget(self._corner_combo)
+        corner_row.addStretch()
+        settings_layout.addLayout(corner_row)
 
         # === Efekty ===
         effects_group = _styled_groupbox("Efekty")
@@ -872,6 +891,8 @@ class StampPicker(QWidget):
             circular_text=circular_text,
             position=Point(100, 100),  # Domyślna pozycja
             rotation=float(self._rotation),
+            rotation_random=False,  # Nie losowa - dokładna rotacja
+            corner="center",  # Narożnik ustawiany w watermark_page.py
             scale=1.0,
             shape=shape,
             border_style=border_style,

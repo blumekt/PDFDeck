@@ -160,7 +160,9 @@ class StampConfig:
 
     # === Pozycja i transformacja ===
     position: Point = field(default_factory=lambda: Point(100, 100))
-    rotation: float = 0.0  # 0 = losowa rotacja +/- 2 stopnie
+    rotation: float = 0.0  # Rotacja w stopniach
+    rotation_random: bool = True  # True = losowa rotacja +/- 2°, False = dokładna rotacja
+    corner: str = "center"  # Narożnik: top-left, top-center, top-right, center, bottom-left, bottom-center, bottom-right
     scale: float = 1.0
 
     # === Kształt i styl ===

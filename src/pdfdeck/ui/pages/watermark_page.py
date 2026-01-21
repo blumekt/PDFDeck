@@ -141,6 +141,65 @@ class WatermarkPage(BasePage):
         layout = QVBoxLayout(tab)
         layout.setContentsMargins(10, 10, 10, 10)
 
+        # Ustawienia rotacji i narożnika
+        settings_row = QHBoxLayout()
+        
+        # Rotacja
+        rotation_label = QLabel("Rotacja:")
+        rotation_label.setStyleSheet("color: #8892a0;")
+        rotation_label.setFixedWidth(80)
+        settings_row.addWidget(rotation_label)
+        
+        self._stamp_rotation_slider = QSlider(Qt.Orientation.Horizontal)
+        self._stamp_rotation_slider.setMinimum(-45)
+        self._stamp_rotation_slider.setMaximum(45)
+        self._stamp_rotation_slider.setValue(0)
+        self._stamp_rotation_slider.setStyleSheet("""
+            QSlider::groove:horizontal {
+                background: #1f2937;
+                height: 6px;
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: #e0a800;
+                width: 16px;
+                margin: -5px 0;
+                border-radius: 8px;
+            }
+        """)
+        settings_row.addWidget(self._stamp_rotation_slider)
+        
+        self._stamp_rotation_value = QLabel("0°")
+        self._stamp_rotation_value.setStyleSheet("color: #8892a0;")
+        self._stamp_rotation_value.setFixedWidth(40)
+        self._stamp_rotation_slider.valueChanged.connect(
+            lambda v: self._stamp_rotation_value.setText(f"{v}°")
+        )
+        settings_row.addWidget(self._stamp_rotation_value)
+        
+        settings_row.addSpacing(20)
+        
+        # Narożnik
+        corner_label = QLabel("Narożnik:")
+        corner_label.setStyleSheet("color: #8892a0;")
+        corner_label.setFixedWidth(80)
+        settings_row.addWidget(corner_label)
+        
+        from pdfdeck.ui.widgets.styled_combo import StyledComboBox
+        self._stamp_corner_combo = StyledComboBox()
+        self._stamp_corner_combo.addItem("Środek", "center")
+        self._stamp_corner_combo.addItem("Górny lewy", "top-left")
+        self._stamp_corner_combo.addItem("Górny środek", "top-center")
+        self._stamp_corner_combo.addItem("Górny prawy", "top-right")
+        self._stamp_corner_combo.addItem("Dolny lewy", "bottom-left")
+        self._stamp_corner_combo.addItem("Dolny środek", "bottom-center")
+        self._stamp_corner_combo.addItem("Dolny prawy", "bottom-right")
+        self._stamp_corner_combo.setFixedWidth(150)
+        settings_row.addWidget(self._stamp_corner_combo)
+        
+        settings_row.addStretch()
+        layout.addLayout(settings_row)
+
         # StampPicker widget
         self._stamp_picker = StampPicker()
         self._stamp_picker.stamp_selected.connect(self._on_stamp_selected)
@@ -203,6 +262,10 @@ class WatermarkPage(BasePage):
                 "Wybierz pieczątkę z listy lub stwórz własną"
             )
             return
+
+        # Zastosuj rotację i narożnik z UI
+        config.rotation = float(self._stamp_rotation_slider.value())
+        config.corner = self._stamp_corner_combo.currentData()
 
         try:
             # Dodaj do aktualnej strony (index 0)
