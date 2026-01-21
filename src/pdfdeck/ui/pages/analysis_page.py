@@ -19,7 +19,7 @@ from PyQt6.QtWidgets import (
     QSplitter, QTabWidget, QScrollArea
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QImage
 
 from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.styled_button import StyledButton

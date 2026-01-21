@@ -51,7 +51,8 @@ class WatchFolderPage(BasePage):
 
     def _setup_ui(self) -> None:
         """Tworzy interfejs użytkownika."""
-        layout = QVBoxLayout(self)
+        # Użyj _main_layout z BasePage zamiast tworzyć nowy
+        layout = self._main_layout
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(16)
 
