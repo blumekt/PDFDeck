@@ -8,7 +8,7 @@ Copy this entire 'scripts' folder to any new project - it will auto-configure it
 Features:
 - Auto-detection of project configuration from pyproject.toml
 - Full environment validation (--check flag)
-- Version update in multiple files
+- Version update in multiple files (pyproject.toml, __init__.py, installer.iss, file_version_info.txt)
 - Build: PyInstaller + Inno Setup
 - Auto-update support (latest.yml/beta.yml with SHA512)
 - GitHub Release with separate releases repository
@@ -674,6 +674,7 @@ class ReleaseManager:
         self.orig_pyproject: Optional[str] = None
         self.orig_installer_iss: Optional[str] = None
         self.orig_version_info: Optional[str] = None
+        self.orig_init_py: Optional[str] = None
 
         # Working directory
         self.cwd = config.project_root
@@ -819,6 +820,7 @@ class ReleaseManager:
         pyproject_path = self.config.resolve_path(self.config.pyproject_toml)
         installer_path = self.config.resolve_path(self.config.installer_iss)
         version_info_path = self.config.resolve_path(self.config.version_info)
+        init_py_path = self.config.resolve_path("src/pdfdeck/__init__.py")
 
         if pyproject_path.exists():
             self.orig_pyproject = pyproject_path.read_text(encoding="utf-8")
@@ -826,6 +828,8 @@ class ReleaseManager:
             self.orig_installer_iss = installer_path.read_text(encoding="utf-8")
         if version_info_path.exists():
             self.orig_version_info = version_info_path.read_text(encoding="utf-8")
+        if init_py_path.exists():
+            self.orig_init_py = init_py_path.read_text(encoding="utf-8")
 
         # Add rollback action
         def rollback_files():
@@ -836,6 +840,8 @@ class ReleaseManager:
                 installer_path.write_text(self.orig_installer_iss, encoding="utf-8")
             if self.orig_version_info:
                 version_info_path.write_text(self.orig_version_info, encoding="utf-8")
+            if self.orig_init_py:
+                init_py_path.write_text(self.orig_init_py, encoding="utf-8")
 
         self.rollback_actions.append(rollback_files)
 
@@ -893,10 +899,22 @@ class ReleaseManager:
                 )
                 version_info_path.write_text(content, encoding="utf-8")
                 log(f"file_version_info.txt -> {self.version}", "ok")
+
+            # Update src/pdfdeck/__init__.py
+            if init_py_path.exists():
+                content = init_py_path.read_text(encoding="utf-8")
+                content = re.sub(
+                    r'__version__ = ".*"',
+                    f'__version__ = "{self.version}"',
+                    content
+                )
+                init_py_path.write_text(content, encoding="utf-8")
+                log(f"__init__.py -> {self.version}", "ok")
         else:
             log(f"pyproject.toml -> {self.version}", "dry")
             log(f"installer.iss -> {self.version}", "dry")
             log(f"file_version_info.txt -> {self.version}", "dry")
+            log(f"__init__.py -> {self.version}", "dry")
 
     def step3_build(self) -> None:
         """Step 3: Build application."""
