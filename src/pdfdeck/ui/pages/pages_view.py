@@ -19,6 +19,7 @@ from PyQt6.QtGui import QPixmap
 from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.thumbnail_grid import ThumbnailGrid
 from pdfdeck.ui.widgets.styled_button import StyledButton
+from pdfdeck.ui.dialogs.link_manager_dialog import LinkManagerDialog
 
 if TYPE_CHECKING:
     from pdfdeck.core.pdf_manager import PDFManager
@@ -147,6 +148,12 @@ class PagesView(BasePage):
 
         bottom_layout.addStretch()
 
+        # Przycisk "Linki"
+        self._links_btn = StyledButton("Linki", "secondary")
+        self._links_btn.setEnabled(False)
+        self._links_btn.clicked.connect(self._on_manage_links)
+        bottom_layout.addWidget(self._links_btn)
+
         # Przycisk "Usuń"
         self._delete_btn = StyledButton("Usuń", "danger")
         self._delete_btn.setEnabled(False)
@@ -199,6 +206,7 @@ class PagesView(BasePage):
         count = len(selected)
         self._selection_label.setText(f"Zaznaczono: {count} stron")
         self._delete_btn.setEnabled(count > 0)
+        self._links_btn.setEnabled(page_index >= 0)
 
     def _on_order_changed(self, new_order: list) -> None:
         """Obsługa zmiany kolejności stron."""
@@ -309,6 +317,44 @@ class PagesView(BasePage):
                 f"Nie można podzielić dokumentu:\n{e}"
             )
 
+    def _on_manage_links(self) -> None:
+        """Obsługa zarządzania linkami na wybranej stronie."""
+        if self._selected_page is None or not self._pdf_manager.is_loaded:
+            return
+
+        page_index = self._selected_page
+        max_pages = self._pdf_manager.page_count
+
+        # Pobierz linki z bieżącej strony
+        links = self._pdf_manager.get_page_links(page_index)
+
+        def on_add(config):
+            self._pdf_manager.insert_link(page_index, config)
+            # Odśwież podgląd
+            self._on_selection_changed(page_index)
+
+        def on_edit(link_index, config):
+            self._pdf_manager.update_link(page_index, link_index, config)
+            self._on_selection_changed(page_index)
+
+        def on_delete(link_index):
+            self._pdf_manager.delete_link(page_index, link_index)
+            self._on_selection_changed(page_index)
+
+        def get_links():
+            return self._pdf_manager.get_page_links(page_index)
+
+        LinkManagerDialog.manage_links(
+            links=links,
+            page_index=page_index,
+            max_pages=max_pages,
+            on_add=on_add,
+            on_edit=on_edit,
+            on_delete=on_delete,
+            get_links=get_links,
+            parent=self
+        )
+
     def _on_save(self) -> None:
         """Obsługa zapisywania dokumentu."""
         if not self._pdf_manager.is_loaded:
@@ -348,6 +394,7 @@ class PagesView(BasePage):
             self._thumbnail_grid.clear()
             self._save_btn.setEnabled(False)
             self._delete_btn.setEnabled(False)
+            self._links_btn.setEnabled(False)
             self._page_preview.clear()
 
     def on_thumbnail_ready(self, page_index: int, png_data: bytes) -> None:

@@ -95,12 +95,18 @@ class StampRenderer:
         return buffer.getvalue()
 
     def _process_auto_date(self, config: StampConfig) -> StampConfig:
-        """Zamienia [DATA] na aktualną datę w tekście."""
+        """Dodaje lub zamienia datę w tekście pieczątki."""
         if not config.auto_date:
             return config
 
         today = datetime.now().strftime("%d.%m.%Y")
-        new_text = config.text.replace("[DATA]", today).replace("[data]", today)
+
+        # Jeśli tekst zawiera [DATA], zamień na datę
+        if "[DATA]" in config.text or "[data]" in config.text:
+            new_text = config.text.replace("[DATA]", today).replace("[data]", today)
+        else:
+            # Dodaj datę pod tekstem głównym
+            new_text = f"{config.text}\n{today}"
 
         # Utwórz nową konfigurację z przetworonym tekstem
         from dataclasses import replace
@@ -151,19 +157,36 @@ class StampRenderer:
         # Rysuj ramkę w zależności od stylu
         self._draw_border(draw, rect, config.border_style, color, border_width)
 
-        # Rysuj tekst
+        # Rysuj tekst (obsługa wieloliniowego)
         font_size = int(config.font_size * self.DPI / 72)
         font = self._get_font(font_size)
         text = config.text.upper()
+        cx, cy = width // 2, height // 2
 
-        # Wyśrodkuj tekst
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-        x = (width - text_width) // 2
-        y = (height - text_height) // 2
+        # Podziel na linie (filtruj puste)
+        lines = [line for line in text.split('\n') if line.strip()]
+        if not lines:
+            return
 
-        draw.text((x, y), text, font=font, fill=color)
+        # Oblicz wysokość każdej linii
+        line_heights = []
+        line_widths = []
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            line_widths.append(bbox[2] - bbox[0])
+            line_heights.append(max(bbox[3] - bbox[1], font_size))
+
+        total_height = sum(line_heights)
+        line_spacing = font_size // 4
+        total_height += line_spacing * (len(lines) - 1)
+
+        # Rysuj każdą linię wycentrowaną
+        current_y = cy - total_height // 2
+        for i, line in enumerate(lines):
+            line_width = line_widths[i]
+            x = cx - line_width // 2
+            draw.text((x, current_y), line, font=font, fill=color)
+            current_y += line_heights[i] + line_spacing
 
     def _draw_circular_stamp(
         self,
@@ -227,19 +250,34 @@ class StampRenderer:
                 int(config.circular_font_size * self.DPI / 72),
             )
 
-        # Rysuj tekst środkowy
+        # Rysuj tekst środkowy (obsługa wieloliniowego)
         if config.text:
             font_size = int(config.font_size * self.DPI / 72)
             font = self._get_font(font_size)
             text = config.text.upper()
 
-            bbox = draw.textbbox((0, 0), text, font=font)
-            text_width = bbox[2] - bbox[0]
-            text_height = bbox[3] - bbox[1]
-            x = cx - text_width // 2
-            y = cy - text_height // 2
+            # Podziel na linie (filtruj puste)
+            lines = [line for line in text.split('\n') if line.strip()]
+            if lines:
+                # Oblicz wysokość każdej linii i całkowitą wysokość
+                line_heights = []
+                line_widths = []
+                for line in lines:
+                    bbox = draw.textbbox((0, 0), line, font=font)
+                    line_widths.append(bbox[2] - bbox[0])
+                    line_heights.append(max(bbox[3] - bbox[1], font_size))
 
-            draw.text((x, y), text, font=font, fill=color)
+                total_height = sum(line_heights)
+                line_spacing = font_size // 4
+                total_height += line_spacing * (len(lines) - 1)
+
+                # Rysuj każdą linię wycentrowaną
+                current_y = cy - total_height // 2
+                for i, line in enumerate(lines):
+                    line_width = line_widths[i]
+                    x = cx - line_width // 2
+                    draw.text((x, current_y), line, font=font, fill=color)
+                    current_y += line_heights[i] + line_spacing
 
     def _draw_oval_stamp(
         self,
@@ -274,18 +312,35 @@ class StampRenderer:
         else:
             draw.ellipse(rect, outline=color, width=border_width)
 
-        # Tekst środkowy
-        font_size = int(config.font_size * self.DPI / 72)
-        font = self._get_font(font_size)
-        text = config.text.upper()
+        # Tekst środkowy (obsługa wieloliniowego)
+        if config.text:
+            font_size = int(config.font_size * self.DPI / 72)
+            font = self._get_font(font_size)
+            text = config.text.upper()
+            cx, cy = width // 2, height // 2
 
-        bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
-        x = (width - text_width) // 2
-        y = (height - text_height) // 2
+            # Podziel na linie (filtruj puste)
+            lines = [line for line in text.split('\n') if line.strip()]
+            if lines:
+                # Oblicz wysokość każdej linii
+                line_heights = []
+                line_widths = []
+                for line in lines:
+                    bbox = draw.textbbox((0, 0), line, font=font)
+                    line_widths.append(bbox[2] - bbox[0])
+                    line_heights.append(max(bbox[3] - bbox[1], font_size))
 
-        draw.text((x, y), text, font=font, fill=color)
+                total_height = sum(line_heights)
+                line_spacing = font_size // 4
+                total_height += line_spacing * (len(lines) - 1)
+
+                # Rysuj każdą linię wycentrowaną
+                current_y = cy - total_height // 2
+                for i, line in enumerate(lines):
+                    line_width = line_widths[i]
+                    x = cx - line_width // 2
+                    draw.text((x, current_y), line, font=font, fill=color)
+                    current_y += line_heights[i] + line_spacing
 
     def _draw_text_on_arc(
         self,

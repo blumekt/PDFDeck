@@ -1,0 +1,2215 @@
+{
+  "total_files": 21,
+  "total_strings": 279,
+  "unique_keys": [
+    "analysis.batch_wiele_faktur",
+    "analysis.dokument_a_oryginał",
+    "analysis.dokument_b_nowy",
+    "analysis.eksportuj_csv",
+    "analysis.najpierw_otwórz_dokument_pdf",
+    "analysis.następna",
+    "analysis.nie_wybrano",
+    "analysis.parsuj_aktualny_dokument",
+    "analysis.podgląd",
+    "analysis.poprzednia",
+    "analysis.porównaj_dokumenty",
+    "analysis.preflight_check",
+    "analysis.przetworzone_faktury",
+    "analysis.strona",
+    "analysis.szczegóły_faktury",
+    "analysis.table_sniffer",
+    "analysis.uruchom_preflight",
+    "analysis.użyj_aktualnego_dokumentu",
+    "analysis.vs",
+    "analysis.znajdź_tabele",
+    "analysis.znalezione_tabele",
+    "app.nie_wybrano_pliku",
+    "app.otwórz",
+    "app.plik_pdf",
+    "automation.generuj_zakładki",
+    "automation.klasyfikator_dokumentów",
+    "automation.klasyfikuj_dokument",
+    "automation.najpierw_otwórz_dokument_pdf",
+    "automation.smart_bookmarks",
+    "automation.statystyki_dokumentu",
+    "automation.wykryj_nagłówki",
+    "automation.wykryte_nagłówki",
+    "automation.załaduj_dokument_aby_zobaczyć_statystyk",
+    "base.strona_w_budowie",
+    "bates.anuluj",
+    "bates.czcionka",
+    "bates.format_numeracji",
+    "bates.pozycja_na_stronie",
+    "bates.title",
+    "bates.zastosuj",
+    "dialogs.error",
+    "header_footer.anuluj",
+    "header_footer.czcionka",
+    "header_footer.marginesy",
+    "header_footer.nagłówek",
+    "header_footer.nagłówek_strony_parzyste",
+    "header_footer.podgląd",
+    "header_footer.pomiń_pierwszą_stronę",
+    "header_footer.różne_dla_parzystychnieparzystych",
+    "header_footer.stopka",
+    "header_footer.stopka_strony_parzyste",
+    "header_footer.title",
+    "header_footer.wybierz_szablon",
+    "header_footer.zastosuj",
+    "link.adres_url",
+    "link.anuluj",
+    "link.dodaj_link",
+    "link.jeśli_puste_użyty_zostanie_istniejący_t",
+    "link.link_do_pliku_zewnętrznego",
+    "link.link_do_strony_dokumentu",
+    "link.link_do_strony_www_url",
+    "link.nie_wybrano_pliku",
+    "link.plik_docelowy",
+    "link.przeglądaj",
+    "link.przejdź_do_strony",
+    "link.strona_docelowa",
+    "link.tekst_linku_opcjonalnie",
+    "link.title",
+    "link.typ_linku",
+    "link.wprowadź_pełny_adres_url_wraz_z_protokoł",
+    "nup.anuluj",
+    "nup.generuj_n_up",
+    "nup.liczba_stron_na_arkusz",
+    "nup.orientacja_wyjściowa",
+    "nup.pionowa_portrait",
+    "nup.podgląd_układu",
+    "nup.pozioma_landscape",
+    "nup.rozmiar",
+    "nup.rozmiar_arkusza_wyjściowego",
+    "nup.title",
+    "ocr.engine_1_szybszy",
+    "ocr.engine_2_dokładniejszy",
+    "pages.usuń",
+    "pages.zapisz_pdf",
+    "pages.zaznaczono_0_stron",
+    "redaction.podgląd_strony",
+    "redaction.redaguj",
+    "redaction.regex",
+    "redaction.szukaj",
+    "redaction.wyniki_wyszukiwania",
+    "redaction.wyszukiwanie",
+    "redaction.wzorzec",
+    "redaction.własny_tekst",
+    "redaction.zaznacz_wszystkie",
+    "redaction.znaleziono_0_wyników",
+    "security.aes_128",
+    "security.aes_256_najsilniejsze",
+    "security.dodawanie_adnotacji",
+    "security.drukowanie",
+    "security.kopiowanie_tekstu_i_grafiki",
+    "security.metadane_dokumentu",
+    "security.modyfikacja_dokumentu",
+    "security.ochrona_hasłem",
+    "security.odśwież_metadane",
+    "security.podpisy_cyfrowe",
+    "security.podpisz",
+    "security.rc4_128",
+    "security.rc4_40_słabe",
+    "security.spłaszcz_dokument",
+    "security.spłaszczanie_dokumentu",
+    "security.status_brak_załadowanego_dokumentu",
+    "security.title",
+    "security.uprawnienia_użytkownika",
+    "security.usuwanie_metadanych",
+    "security.usuń_metadane",
+    "security.weryfikuj",
+    "security.wypełnianie_formularzy",
+    "security.zaszyfruj_dokument",
+    "settings.pdfdeck",
+    "signature.anuluj",
+    "signature.certyfikat",
+    "signature.hasło",
+    "signature.nowy_certyfikat_self_signed",
+    "signature.opcje_podpisu",
+    "signature.podaj_hasło",
+    "signature.podaj_hasło_do_certyfikatu",
+    "signature.podaj_nazwę_cn",
+    "signature.podaj_organizację",
+    "signature.podpisz",
+    "signature.pokaż_datę",
+    "signature.pokaż_info",
+    "signature.pokaż_powód",
+    "signature.pozycja_wizualizacji",
+    "signature.przeglądaj",
+    "signature.title",
+    "signature.utwórz_certyfikat",
+    "signature.wybierz_plik_certyfikatu",
+    "split.anuluj",
+    "split.dodaj",
+    "split.katalog_docelowy",
+    "split.liczba_części",
+    "split.metoda_podziału",
+    "split.nie_wybrano_użyj_katalogu_źródłowego",
+    "split.podgląd_podziału",
+    "split.podziel_dokument",
+    "split.podziel_na_równe_części",
+    "split.podziel_po_określonych_stronach",
+    "split.podziel_po_stronie",
+    "split.przeglądaj",
+    "split.punkty_podziału",
+    "split.title",
+    "split.usuń_zaznaczony",
+    "stamp_picker.0",
+    "stamp_picker.brak",
+    "stamp_picker.cienka",
+    "stamp_picker.data",
+    "stamp_picker.dodaj_pieczątkę",
+    "stamp_picker.efekt_letterpress",
+    "stamp_picker.efekt_podwójnego_odbicia",
+    "stamp_picker.gruba",
+    "stamp_picker.kolor",
+    "stamp_picker.kropelki_tuszu_wokół",
+    "stamp_picker.kształt",
+    "stamp_picker.lekkie",
+    "stamp_picker.mocne",
+    "stamp_picker.okrągła",
+    "stamp_picker.owalna",
+    "stamp_picker.podwójna",
+    "stamp_picker.podwójne",
+    "stamp_picker.pojedyncza",
+    "stamp_picker.prostokąt",
+    "stamp_picker.przerywana",
+    "stamp_picker.przezroczystość",
+    "stamp_picker.ramka",
+    "stamp_picker.rotacja",
+    "stamp_picker.rozbryzgi",
+    "stamp_picker.rozmiar",
+    "stamp_picker.starodruk",
+    "stamp_picker.tekst",
+    "stamp_picker.tekst_obwód",
+    "stamp_picker.wstaw_data_dziś",
+    "stamp_picker.wybierz_pieczątkę",
+    "stamp_picker.zmień",
+    "stamp_picker.zużycie",
+    "stamp_picker.średnie",
+    "tools.2_strony",
+    "tools.4_strony",
+    "tools.6_stron",
+    "tools.9_stron",
+    "tools.a3",
+    "tools.a4",
+    "tools.a4_enforcer",
+    "tools.dodaj_nagłówkistopki",
+    "tools.dodaj_numerację_bates",
+    "tools.generuj_n_up",
+    "tools.kompresja_i_optymalizacja",
+    "tools.konwertuj",
+    "tools.letter",
+    "tools.n_up_wiele_stron_na_kartce",
+    "tools.nagłówki_i_stopki",
+    "tools.normalizuj_do_a4",
+    "tools.numeracja_bates",
+    "tools.orientacja",
+    "tools.pdfa_1b_podstawowy",
+    "tools.pdfa_2b_przezroczystość",
+    "tools.pdfa_3b_załączniki",
+    "tools.pdfa_converter",
+    "tools.poziom",
+    "tools.pozioma",
+    "tools.rozmiar",
+    "tools.stron",
+    "tools.waliduj",
+    "tools.zapisz_zoptymalizowany",
+    "update.dostępna_aktualizacja",
+    "update.pobieranie",
+    "update.pobierz_i_zainstaluj",
+    "update.pomiń",
+    "update.title",
+    "update.zainstaluj_teraz",
+    "watch_folder.folder_wejściowy",
+    "watch_folder.folder_wyjściowy",
+    "watch_folder.konfiguracja",
+    "watch_folder.log_operacji",
+    "watch_folder.profil",
+    "watch_folder.przeglądaj",
+    "watch_folder.przetworzono_0_sukces_0_błędy_0",
+    "watch_folder.status_zatrzymany",
+    "watch_folder.uruchom_monitorowanie",
+    "watch_folder.watch_folder_automatyczne_przetwarzani",
+    "watch_folder.wyczyść_log",
+    "watch_folder.zatrzymaj",
+    "watermark.dodaj_pieczątkę_do_strony",
+    "watermark.dodaj_znak_wodny",
+    "watermark.kolor",
+    "watermark.nad_tekstem",
+    "watermark.pod_tekstem",
+    "watermark.podgląd",
+    "watermark.pozycja",
+    "watermark.przezr",
+    "watermark.przykład",
+    "watermark.rotacja",
+    "watermark.rozmiar",
+    "watermark.szybkie_znaki_wodne",
+    "watermark.tekst",
+    "watermark.znak_wodny_tekstowy",
+    "whiteout.anuluj",
+    "whiteout.kolor_tekstu",
+    "whiteout.kolor_zakrycia",
+    "whiteout.obszar_zakrycia",
+    "whiteout.rozmiar_czcionki",
+    "whiteout.title",
+    "whiteout.wstaw_tekst_po_zakryciu",
+    "whiteout.zastosuj",
+    "whiteout.zmień"
+  ],
+  "strings": [
+    {
+      "text": "Plik PDF:",
+      "file": "src\\pdfdeck\\ui\\main_window.py",
+      "line": 122,
+      "pattern": "QLabel",
+      "key": "app.plik_pdf"
+    },
+    {
+      "text": "Nie wybrano pliku",
+      "file": "src\\pdfdeck\\ui\\main_window.py",
+      "line": 127,
+      "pattern": "QLabel",
+      "key": "app.nie_wybrano_pliku"
+    },
+    {
+      "text": "Otwórz",
+      "file": "src\\pdfdeck\\ui\\main_window.py",
+      "line": 142,
+      "pattern": "StyledButton",
+      "key": "app.otwórz"
+    },
+    {
+      "text": "Numeracja Bates",
+      "file": "src\\pdfdeck\\ui\\dialogs\\bates_dialog.py",
+      "line": 42,
+      "pattern": "setWindowTitle",
+      "key": "bates.title"
+    },
+    {
+      "text": "Format numeracji",
+      "file": "src\\pdfdeck\\ui\\dialogs\\bates_dialog.py",
+      "line": 115,
+      "pattern": "QGroupBox",
+      "key": "bates.format_numeracji"
+    },
+    {
+      "text": "Pozycja na stronie",
+      "file": "src\\pdfdeck\\ui\\dialogs\\bates_dialog.py",
+      "line": 160,
+      "pattern": "QGroupBox",
+      "key": "bates.pozycja_na_stronie"
+    },
+    {
+      "text": "Czcionka",
+      "file": "src\\pdfdeck\\ui\\dialogs\\bates_dialog.py",
+      "line": 181,
+      "pattern": "QGroupBox",
+      "key": "bates.czcionka"
+    },
+    {
+      "text": "Anuluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\bates_dialog.py",
+      "line": 206,
+      "pattern": "StyledButton",
+      "key": "bates.anuluj"
+    },
+    {
+      "text": "Zastosuj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\bates_dialog.py",
+      "line": 210,
+      "pattern": "StyledButton",
+      "key": "bates.zastosuj"
+    },
+    {
+      "text": "Nagłówki i stopki",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 43,
+      "pattern": "setWindowTitle",
+      "key": "header_footer.title"
+    },
+    {
+      "text": "Podgląd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 158,
+      "pattern": "QGroupBox",
+      "key": "header_footer.podgląd"
+    },
+    {
+      "text": "Wybierz szablon...",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 177,
+      "pattern": "addItem",
+      "key": "header_footer.wybierz_szablon"
+    },
+    {
+      "text": "Anuluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 185,
+      "pattern": "StyledButton",
+      "key": "header_footer.anuluj"
+    },
+    {
+      "text": "Zastosuj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 189,
+      "pattern": "StyledButton",
+      "key": "header_footer.zastosuj"
+    },
+    {
+      "text": "Nagłówek",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 201,
+      "pattern": "QGroupBox",
+      "key": "header_footer.nagłówek"
+    },
+    {
+      "text": "Stopka",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 222,
+      "pattern": "QGroupBox",
+      "key": "header_footer.stopka"
+    },
+    {
+      "text": "Pomiń pierwszą stronę",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 245,
+      "pattern": "QCheckBox",
+      "key": "header_footer.pomiń_pierwszą_stronę"
+    },
+    {
+      "text": "Różne dla parzystych/nieparzystych",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 248,
+      "pattern": "QCheckBox",
+      "key": "header_footer.różne_dla_parzystychnieparzystych"
+    },
+    {
+      "text": "Nagłówek (strony parzyste)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 278,
+      "pattern": "QGroupBox",
+      "key": "header_footer.nagłówek_strony_parzyste"
+    },
+    {
+      "text": "Stopka (strony parzyste)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 296,
+      "pattern": "QGroupBox",
+      "key": "header_footer.stopka_strony_parzyste"
+    },
+    {
+      "text": "Czcionka",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 323,
+      "pattern": "QGroupBox",
+      "key": "header_footer.czcionka"
+    },
+    {
+      "text": "Marginesy",
+      "file": "src\\pdfdeck\\ui\\dialogs\\header_footer_dialog.py",
+      "line": 348,
+      "pattern": "QGroupBox",
+      "key": "header_footer.marginesy"
+    },
+    {
+      "text": "Dodaj link",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 40,
+      "pattern": "setWindowTitle",
+      "key": "link.title"
+    },
+    {
+      "text": "Typ linku",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 91,
+      "pattern": "QGroupBox",
+      "key": "link.typ_linku"
+    },
+    {
+      "text": "Link do strony WWW (URL)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 96,
+      "pattern": "QRadioButton",
+      "key": "link.link_do_strony_www_url"
+    },
+    {
+      "text": "Link do strony dokumentu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 101,
+      "pattern": "QRadioButton",
+      "key": "link.link_do_strony_dokumentu"
+    },
+    {
+      "text": "Link do pliku zewnętrznego",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 105,
+      "pattern": "QRadioButton",
+      "key": "link.link_do_pliku_zewnętrznego"
+    },
+    {
+      "text": "Adres URL",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 114,
+      "pattern": "QGroupBox",
+      "key": "link.adres_url"
+    },
+    {
+      "text": "Wprowadź pełny adres URL wraz z protokołem (https://)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 133,
+      "pattern": "QLabel",
+      "key": "link.wprowadź_pełny_adres_url_wraz_z_protokoł"
+    },
+    {
+      "text": "Strona docelowa",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 140,
+      "pattern": "QGroupBox",
+      "key": "link.strona_docelowa"
+    },
+    {
+      "text": "Przejdź do strony:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 145,
+      "pattern": "QLabel",
+      "key": "link.przejdź_do_strony"
+    },
+    {
+      "text": "Plik docelowy",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 173,
+      "pattern": "QGroupBox",
+      "key": "link.plik_docelowy"
+    },
+    {
+      "text": "Nie wybrano pliku",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 178,
+      "pattern": "QLabel",
+      "key": "link.nie_wybrano_pliku"
+    },
+    {
+      "text": "Przeglądaj...",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 185,
+      "pattern": "QPushButton",
+      "key": "link.przeglądaj"
+    },
+    {
+      "text": "Tekst linku (opcjonalnie)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 205,
+      "pattern": "QGroupBox",
+      "key": "link.tekst_linku_opcjonalnie"
+    },
+    {
+      "text": "Jeśli puste, użyty zostanie istniejący tekst w dokumencie",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 224,
+      "pattern": "QLabel",
+      "key": "link.jeśli_puste_użyty_zostanie_istniejący_t"
+    },
+    {
+      "text": "Anuluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 234,
+      "pattern": "StyledButton",
+      "key": "link.anuluj"
+    },
+    {
+      "text": "Dodaj link",
+      "file": "src\\pdfdeck\\ui\\dialogs\\link_dialog.py",
+      "line": 238,
+      "pattern": "StyledButton",
+      "key": "link.dodaj_link"
+    },
+    {
+      "text": "N-up - Wiele stron na arkuszu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 46,
+      "pattern": "setWindowTitle",
+      "key": "nup.title"
+    },
+    {
+      "text": "Liczba stron na arkusz",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 105,
+      "pattern": "QGroupBox",
+      "key": "nup.liczba_stron_na_arkusz"
+    },
+    {
+      "text": "Orientacja wyjściowa",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 128,
+      "pattern": "QGroupBox",
+      "key": "nup.orientacja_wyjściowa"
+    },
+    {
+      "text": "Pionowa (portrait)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 133,
+      "pattern": "QRadioButton",
+      "key": "nup.pionowa_portrait"
+    },
+    {
+      "text": "Pozioma (landscape)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 137,
+      "pattern": "QRadioButton",
+      "key": "nup.pozioma_landscape"
+    },
+    {
+      "text": "Rozmiar arkusza wyjściowego",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 145,
+      "pattern": "QGroupBox",
+      "key": "nup.rozmiar_arkusza_wyjściowego"
+    },
+    {
+      "text": "Rozmiar:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 149,
+      "pattern": "QLabel",
+      "key": "nup.rozmiar"
+    },
+    {
+      "text": "Podgląd układu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 189,
+      "pattern": "QGroupBox",
+      "key": "nup.podgląd_układu"
+    },
+    {
+      "text": "Anuluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 211,
+      "pattern": "StyledButton",
+      "key": "nup.anuluj"
+    },
+    {
+      "text": "Generuj N-up",
+      "file": "src\\pdfdeck\\ui\\dialogs\\nup_dialog.py",
+      "line": 215,
+      "pattern": "StyledButton",
+      "key": "nup.generuj_n_up"
+    },
+    {
+      "text": "Podpisy cyfrowe",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 42,
+      "pattern": "setWindowTitle",
+      "key": "signature.title"
+    },
+    {
+      "text": "Certyfikat",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 139,
+      "pattern": "QGroupBox",
+      "key": "signature.certyfikat"
+    },
+    {
+      "text": "Przeglądaj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 148,
+      "pattern": "StyledButton",
+      "key": "signature.przeglądaj"
+    },
+    {
+      "text": "Hasło:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 156,
+      "pattern": "QLabel",
+      "key": "signature.hasło"
+    },
+    {
+      "text": "Pokaż info",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 168,
+      "pattern": "StyledButton",
+      "key": "signature.pokaż_info"
+    },
+    {
+      "text": "Opcje podpisu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 175,
+      "pattern": "QGroupBox",
+      "key": "signature.opcje_podpisu"
+    },
+    {
+      "text": "Pozycja wizualizacji",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 192,
+      "pattern": "QGroupBox",
+      "key": "signature.pozycja_wizualizacji"
+    },
+    {
+      "text": "Pokaż datę",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 218,
+      "pattern": "QCheckBox",
+      "key": "signature.pokaż_datę"
+    },
+    {
+      "text": "Pokaż powód",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 222,
+      "pattern": "QCheckBox",
+      "key": "signature.pokaż_powód"
+    },
+    {
+      "text": "Nowy certyfikat self-signed",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 234,
+      "pattern": "QGroupBox",
+      "key": "signature.nowy_certyfikat_self_signed"
+    },
+    {
+      "text": "Utwórz certyfikat",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 258,
+      "pattern": "StyledButton",
+      "key": "signature.utwórz_certyfikat"
+    },
+    {
+      "text": "Anuluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 294,
+      "pattern": "StyledButton",
+      "key": "signature.anuluj"
+    },
+    {
+      "text": "Podpisz",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 298,
+      "pattern": "StyledButton",
+      "key": "signature.podpisz"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 322,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Wybierz plik certyfikatu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 322,
+      "pattern": "QMessageBox_message",
+      "key": "signature.wybierz_plik_certyfikatu"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 326,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Podaj hasło do certyfikatu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 326,
+      "pattern": "QMessageBox_message",
+      "key": "signature.podaj_hasło_do_certyfikatu"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 371,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Podaj nazwę (CN)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 371,
+      "pattern": "QMessageBox_message",
+      "key": "signature.podaj_nazwę_cn"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 375,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Podaj organizację",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 375,
+      "pattern": "QMessageBox_message",
+      "key": "signature.podaj_organizację"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 379,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Podaj hasło",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 379,
+      "pattern": "QMessageBox_message",
+      "key": "signature.podaj_hasło"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 421,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Wybierz plik certyfikatu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 421,
+      "pattern": "QMessageBox_message",
+      "key": "signature.wybierz_plik_certyfikatu"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 425,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Podaj hasło do certyfikatu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\signature_dialog.py",
+      "line": 425,
+      "pattern": "QMessageBox_message",
+      "key": "signature.podaj_hasło_do_certyfikatu"
+    },
+    {
+      "text": "Podziel dokument",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 40,
+      "pattern": "setWindowTitle",
+      "key": "split.title"
+    },
+    {
+      "text": "Metoda podziału",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 97,
+      "pattern": "QGroupBox",
+      "key": "split.metoda_podziału"
+    },
+    {
+      "text": "Podziel na równe części",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 102,
+      "pattern": "QRadioButton",
+      "key": "split.podziel_na_równe_części"
+    },
+    {
+      "text": "Liczba części:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 110,
+      "pattern": "QLabel",
+      "key": "split.liczba_części"
+    },
+    {
+      "text": "Podziel po określonych stronach",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 133,
+      "pattern": "QRadioButton",
+      "key": "split.podziel_po_określonych_stronach"
+    },
+    {
+      "text": "Punkty podziału",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 142,
+      "pattern": "QGroupBox",
+      "key": "split.punkty_podziału"
+    },
+    {
+      "text": "Podziel po stronie:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 155,
+      "pattern": "QLabel",
+      "key": "split.podziel_po_stronie"
+    },
+    {
+      "text": "Dodaj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 174,
+      "pattern": "StyledButton",
+      "key": "split.dodaj"
+    },
+    {
+      "text": "Usuń zaznaczony",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 202,
+      "pattern": "StyledButton",
+      "key": "split.usuń_zaznaczony"
+    },
+    {
+      "text": "Podgląd podziału",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 209,
+      "pattern": "QGroupBox",
+      "key": "split.podgląd_podziału"
+    },
+    {
+      "text": "Katalog docelowy",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 222,
+      "pattern": "QGroupBox",
+      "key": "split.katalog_docelowy"
+    },
+    {
+      "text": "Nie wybrano (użyj katalogu źródłowego)",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 226,
+      "pattern": "QLabel",
+      "key": "split.nie_wybrano_użyj_katalogu_źródłowego"
+    },
+    {
+      "text": "Przeglądaj...",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 233,
+      "pattern": "QPushButton",
+      "key": "split.przeglądaj"
+    },
+    {
+      "text": "Anuluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 256,
+      "pattern": "StyledButton",
+      "key": "split.anuluj"
+    },
+    {
+      "text": "Podziel dokument",
+      "file": "src\\pdfdeck\\ui\\dialogs\\split_dialog.py",
+      "line": 260,
+      "pattern": "StyledButton",
+      "key": "split.podziel_dokument"
+    },
+    {
+      "text": "Aktualizacja PDFDeck",
+      "file": "src\\pdfdeck\\ui\\dialogs\\update_dialog.py",
+      "line": 46,
+      "pattern": "setWindowTitle",
+      "key": "update.title"
+    },
+    {
+      "text": "Dostępna aktualizacja",
+      "file": "src\\pdfdeck\\ui\\dialogs\\update_dialog.py",
+      "line": 99,
+      "pattern": "QGroupBox",
+      "key": "update.dostępna_aktualizacja"
+    },
+    {
+      "text": "Pobieranie",
+      "file": "src\\pdfdeck\\ui\\dialogs\\update_dialog.py",
+      "line": 124,
+      "pattern": "QGroupBox",
+      "key": "update.pobieranie"
+    },
+    {
+      "text": "Pomiń",
+      "file": "src\\pdfdeck\\ui\\dialogs\\update_dialog.py",
+      "line": 144,
+      "pattern": "StyledButton",
+      "key": "update.pomiń"
+    },
+    {
+      "text": "Pobierz i zainstaluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\update_dialog.py",
+      "line": 148,
+      "pattern": "StyledButton",
+      "key": "update.pobierz_i_zainstaluj"
+    },
+    {
+      "text": "Zainstaluj teraz",
+      "file": "src\\pdfdeck\\ui\\dialogs\\update_dialog.py",
+      "line": 152,
+      "pattern": "StyledButton",
+      "key": "update.zainstaluj_teraz"
+    },
+    {
+      "text": "Whiteout - Zakryj i wstaw tekst",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 42,
+      "pattern": "setWindowTitle",
+      "key": "whiteout.title"
+    },
+    {
+      "text": "Obszar zakrycia",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 75,
+      "pattern": "QGroupBox",
+      "key": "whiteout.obszar_zakrycia"
+    },
+    {
+      "text": "Kolor zakrycia:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 87,
+      "pattern": "QLabel",
+      "key": "whiteout.kolor_zakrycia"
+    },
+    {
+      "text": "Zmień",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 99,
+      "pattern": "QPushButton",
+      "key": "whiteout.zmień"
+    },
+    {
+      "text": "Wstaw tekst po zakryciu",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 123,
+      "pattern": "QCheckBox",
+      "key": "whiteout.wstaw_tekst_po_zakryciu"
+    },
+    {
+      "text": "Rozmiar czcionki:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 152,
+      "pattern": "QLabel",
+      "key": "whiteout.rozmiar_czcionki"
+    },
+    {
+      "text": "Kolor tekstu:",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 181,
+      "pattern": "QLabel",
+      "key": "whiteout.kolor_tekstu"
+    },
+    {
+      "text": "Zmień",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 193,
+      "pattern": "QPushButton",
+      "key": "whiteout.zmień"
+    },
+    {
+      "text": "Anuluj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 223,
+      "pattern": "StyledButton",
+      "key": "whiteout.anuluj"
+    },
+    {
+      "text": "Zastosuj",
+      "file": "src\\pdfdeck\\ui\\dialogs\\whiteout_dialog.py",
+      "line": 227,
+      "pattern": "StyledButton",
+      "key": "whiteout.zastosuj"
+    },
+    {
+      "text": "Preflight Check",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 109,
+      "pattern": "QGroupBox",
+      "key": "analysis.preflight_check"
+    },
+    {
+      "text": "Uruchom Preflight",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 122,
+      "pattern": "StyledButton",
+      "key": "analysis.uruchom_preflight"
+    },
+    {
+      "text": "Table Sniffer",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 148,
+      "pattern": "QGroupBox",
+      "key": "analysis.table_sniffer"
+    },
+    {
+      "text": "Strona:",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 161,
+      "pattern": "QLabel",
+      "key": "analysis.strona"
+    },
+    {
+      "text": "Znajdź tabele",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 173,
+      "pattern": "StyledButton",
+      "key": "analysis.znajdź_tabele"
+    },
+    {
+      "text": "Eksportuj CSV",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 177,
+      "pattern": "StyledButton",
+      "key": "analysis.eksportuj_csv"
+    },
+    {
+      "text": "Znalezione tabele:",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 184,
+      "pattern": "QLabel",
+      "key": "analysis.znalezione_tabele"
+    },
+    {
+      "text": "Podgląd:",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 209,
+      "pattern": "QLabel",
+      "key": "analysis.podgląd"
+    },
+    {
+      "text": "Dokument A (oryginał):",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 270,
+      "pattern": "QLabel",
+      "key": "analysis.dokument_a_oryginał"
+    },
+    {
+      "text": "Nie wybrano",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 275,
+      "pattern": "QLabel",
+      "key": "analysis.nie_wybrano"
+    },
+    {
+      "text": "Użyj aktualnego dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 287,
+      "pattern": "StyledButton",
+      "key": "analysis.użyj_aktualnego_dokumentu"
+    },
+    {
+      "text": "vs",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 294,
+      "pattern": "QLabel",
+      "key": "analysis.vs"
+    },
+    {
+      "text": "Dokument B (nowy):",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 302,
+      "pattern": "QLabel",
+      "key": "analysis.dokument_b_nowy"
+    },
+    {
+      "text": "Nie wybrano",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 307,
+      "pattern": "QLabel",
+      "key": "analysis.nie_wybrano"
+    },
+    {
+      "text": "Porównaj dokumenty",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 326,
+      "pattern": "StyledButton",
+      "key": "analysis.porównaj_dokumenty"
+    },
+    {
+      "text": "◀ Poprzednia",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 333,
+      "pattern": "StyledButton",
+      "key": "analysis.poprzednia"
+    },
+    {
+      "text": "Strona: -/-",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 338,
+      "pattern": "QLabel",
+      "key": "analysis.strona"
+    },
+    {
+      "text": "Następna ▶",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 342,
+      "pattern": "StyledButton",
+      "key": "analysis.następna"
+    },
+    {
+      "text": "Parsuj aktualny dokument",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 429,
+      "pattern": "StyledButton",
+      "key": "analysis.parsuj_aktualny_dokument"
+    },
+    {
+      "text": "Batch - wiele faktur",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 433,
+      "pattern": "StyledButton",
+      "key": "analysis.batch_wiele_faktur"
+    },
+    {
+      "text": "Eksportuj CSV",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 439,
+      "pattern": "StyledButton",
+      "key": "analysis.eksportuj_csv"
+    },
+    {
+      "text": "Przetworzone faktury",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 456,
+      "pattern": "QGroupBox",
+      "key": "analysis.przetworzone_faktury"
+    },
+    {
+      "text": "Szczegóły faktury",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 483,
+      "pattern": "QGroupBox",
+      "key": "analysis.szczegóły_faktury"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 532,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Najpierw otwórz dokument PDF",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 532,
+      "pattern": "QMessageBox_message",
+      "key": "analysis.najpierw_otwórz_dokument_pdf"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 753,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Najpierw otwórz dokument PDF",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 753,
+      "pattern": "QMessageBox_message",
+      "key": "analysis.najpierw_otwórz_dokument_pdf"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 912,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Najpierw otwórz dokument PDF",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 912,
+      "pattern": "QMessageBox_message",
+      "key": "analysis.najpierw_otwórz_dokument_pdf"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 956,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Najpierw otwórz dokument PDF",
+      "file": "src\\pdfdeck\\ui\\pages\\analysis_page.py",
+      "line": 956,
+      "pattern": "QMessageBox_message",
+      "key": "analysis.najpierw_otwórz_dokument_pdf"
+    },
+    {
+      "text": "Smart Bookmarks",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 66,
+      "pattern": "QGroupBox",
+      "key": "automation.smart_bookmarks"
+    },
+    {
+      "text": "Wykryj nagłówki",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 83,
+      "pattern": "StyledButton",
+      "key": "automation.wykryj_nagłówki"
+    },
+    {
+      "text": "Generuj zakładki",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 88,
+      "pattern": "StyledButton",
+      "key": "automation.generuj_zakładki"
+    },
+    {
+      "text": "Statystyki dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 96,
+      "pattern": "QGroupBox",
+      "key": "automation.statystyki_dokumentu"
+    },
+    {
+      "text": "Załaduj dokument, aby zobaczyć statystyki.",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 100,
+      "pattern": "QLabel",
+      "key": "automation.załaduj_dokument_aby_zobaczyć_statystyk"
+    },
+    {
+      "text": "Klasyfikator dokumentów",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 108,
+      "pattern": "QGroupBox",
+      "key": "automation.klasyfikator_dokumentów"
+    },
+    {
+      "text": "Klasyfikuj dokument",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 121,
+      "pattern": "StyledButton",
+      "key": "automation.klasyfikuj_dokument"
+    },
+    {
+      "text": "Wykryte nagłówki",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 159,
+      "pattern": "QGroupBox",
+      "key": "automation.wykryte_nagłówki"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 215,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Najpierw otwórz dokument PDF",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 215,
+      "pattern": "QMessageBox_message",
+      "key": "automation.najpierw_otwórz_dokument_pdf"
+    },
+    {
+      "text": "Błąd",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 286,
+      "pattern": "QMessageBox_title",
+      "key": "dialogs.error"
+    },
+    {
+      "text": "Najpierw otwórz dokument PDF",
+      "file": "src\\pdfdeck\\ui\\pages\\automation_page.py",
+      "line": 286,
+      "pattern": "QMessageBox_message",
+      "key": "automation.najpierw_otwórz_dokument_pdf"
+    },
+    {
+      "text": "Strona w budowie",
+      "file": "src\\pdfdeck\\ui\\pages\\base_page.py",
+      "line": 121,
+      "pattern": "QLabel",
+      "key": "base.strona_w_budowie"
+    },
+    {
+      "text": "Engine 1 (szybszy)",
+      "file": "src\\pdfdeck\\ui\\pages\\ocr_page.py",
+      "line": 206,
+      "pattern": "addItem",
+      "key": "ocr.engine_1_szybszy"
+    },
+    {
+      "text": "Engine 2 (dokładniejszy)",
+      "file": "src\\pdfdeck\\ui\\pages\\ocr_page.py",
+      "line": 207,
+      "pattern": "addItem",
+      "key": "ocr.engine_2_dokładniejszy"
+    },
+    {
+      "text": "Zaznaczono: 0 stron",
+      "file": "src\\pdfdeck\\ui\\pages\\pages_view.py",
+      "line": 145,
+      "pattern": "QLabel",
+      "key": "pages.zaznaczono_0_stron"
+    },
+    {
+      "text": "Usuń",
+      "file": "src\\pdfdeck\\ui\\pages\\pages_view.py",
+      "line": 152,
+      "pattern": "StyledButton",
+      "key": "pages.usuń"
+    },
+    {
+      "text": "Zapisz PDF",
+      "file": "src\\pdfdeck\\ui\\pages\\pages_view.py",
+      "line": 158,
+      "pattern": "StyledButton",
+      "key": "pages.zapisz_pdf"
+    },
+    {
+      "text": "Wyszukiwanie",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 76,
+      "pattern": "QGroupBox",
+      "key": "redaction.wyszukiwanie"
+    },
+    {
+      "text": "Wzorzec:",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 82,
+      "pattern": "QLabel",
+      "key": "redaction.wzorzec"
+    },
+    {
+      "text": "-- Własny tekst --",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 88,
+      "pattern": "addItem",
+      "key": "redaction.własny_tekst"
+    },
+    {
+      "text": "Szukaj:",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 99,
+      "pattern": "QLabel",
+      "key": "redaction.szukaj"
+    },
+    {
+      "text": "Regex",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 110,
+      "pattern": "QCheckBox",
+      "key": "redaction.regex"
+    },
+    {
+      "text": "Szukaj",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 114,
+      "pattern": "StyledButton",
+      "key": "redaction.szukaj"
+    },
+    {
+      "text": "Wyniki wyszukiwania:",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 139,
+      "pattern": "QLabel",
+      "key": "redaction.wyniki_wyszukiwania"
+    },
+    {
+      "text": "Podgląd strony:",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 156,
+      "pattern": "QLabel",
+      "key": "redaction.podgląd_strony"
+    },
+    {
+      "text": "Znaleziono: 0 wyników",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 185,
+      "pattern": "QLabel",
+      "key": "redaction.znaleziono_0_wyników"
+    },
+    {
+      "text": "Zaznacz wszystkie",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 191,
+      "pattern": "StyledButton",
+      "key": "redaction.zaznacz_wszystkie"
+    },
+    {
+      "text": "Redaguj",
+      "file": "src\\pdfdeck\\ui\\pages\\redaction_page.py",
+      "line": 196,
+      "pattern": "StyledButton",
+      "key": "redaction.redaguj"
+    },
+    {
+      "text": "Metadane dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 79,
+      "pattern": "QGroupBox",
+      "key": "security.metadane_dokumentu"
+    },
+    {
+      "text": "Odśwież metadane",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 98,
+      "pattern": "StyledButton",
+      "key": "security.odśwież_metadane"
+    },
+    {
+      "text": "Usuwanie metadanych",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 112,
+      "pattern": "QGroupBox",
+      "key": "security.usuwanie_metadanych"
+    },
+    {
+      "text": "Usuń metadane",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 127,
+      "pattern": "StyledButton",
+      "key": "security.usuń_metadane"
+    },
+    {
+      "text": "Spłaszczanie dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 134,
+      "pattern": "QGroupBox",
+      "key": "security.spłaszczanie_dokumentu"
+    },
+    {
+      "text": "Spłaszcz dokument",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 148,
+      "pattern": "StyledButton",
+      "key": "security.spłaszcz_dokument"
+    },
+    {
+      "text": "Ochrona hasłem",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 155,
+      "pattern": "QGroupBox",
+      "key": "security.ochrona_hasłem"
+    },
+    {
+      "text": "Zaszyfruj dokument",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 169,
+      "pattern": "StyledButton",
+      "key": "security.zaszyfruj_dokument"
+    },
+    {
+      "text": "Podpisy cyfrowe",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 176,
+      "pattern": "QGroupBox",
+      "key": "security.podpisy_cyfrowe"
+    },
+    {
+      "text": "Status: brak załadowanego dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 191,
+      "pattern": "QLabel",
+      "key": "security.status_brak_załadowanego_dokumentu"
+    },
+    {
+      "text": "Weryfikuj",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 198,
+      "pattern": "StyledButton",
+      "key": "security.weryfikuj"
+    },
+    {
+      "text": "Podpisz",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 202,
+      "pattern": "StyledButton",
+      "key": "security.podpisz"
+    },
+    {
+      "text": "Szyfrowanie dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 423,
+      "pattern": "setWindowTitle",
+      "key": "security.title"
+    },
+    {
+      "text": "Szyfrowanie dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 430,
+      "pattern": "setWindowTitle",
+      "key": "security.title"
+    },
+    {
+      "text": "AES-256 (najsilniejsze)",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 482,
+      "pattern": "addItem",
+      "key": "security.aes_256_najsilniejsze"
+    },
+    {
+      "text": "AES-128",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 483,
+      "pattern": "addItem",
+      "key": "security.aes_128"
+    },
+    {
+      "text": "RC4-128",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 484,
+      "pattern": "addItem",
+      "key": "security.rc4_128"
+    },
+    {
+      "text": "RC4-40 (słabe)",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 485,
+      "pattern": "addItem",
+      "key": "security.rc4_40_słabe"
+    },
+    {
+      "text": "Uprawnienia użytkownika",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 491,
+      "pattern": "QGroupBox",
+      "key": "security.uprawnienia_użytkownika"
+    },
+    {
+      "text": "Drukowanie",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 495,
+      "pattern": "QCheckBox",
+      "key": "security.drukowanie"
+    },
+    {
+      "text": "Kopiowanie tekstu i grafiki",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 499,
+      "pattern": "QCheckBox",
+      "key": "security.kopiowanie_tekstu_i_grafiki"
+    },
+    {
+      "text": "Modyfikacja dokumentu",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 503,
+      "pattern": "QCheckBox",
+      "key": "security.modyfikacja_dokumentu"
+    },
+    {
+      "text": "Dodawanie adnotacji",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 507,
+      "pattern": "QCheckBox",
+      "key": "security.dodawanie_adnotacji"
+    },
+    {
+      "text": "Wypełnianie formularzy",
+      "file": "src\\pdfdeck\\ui\\pages\\security_page.py",
+      "line": 511,
+      "pattern": "QCheckBox",
+      "key": "security.wypełnianie_formularzy"
+    },
+    {
+      "text": "PDFDeck",
+      "file": "src\\pdfdeck\\ui\\pages\\settings_page.py",
+      "line": 114,
+      "pattern": "QGroupBox",
+      "key": "settings.pdfdeck"
+    },
+    {
+      "text": "A4 Enforcer",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 89,
+      "pattern": "QGroupBox",
+      "key": "tools.a4_enforcer"
+    },
+    {
+      "text": "Normalizuj do A4",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 103,
+      "pattern": "StyledButton",
+      "key": "tools.normalizuj_do_a4"
+    },
+    {
+      "text": "Kompresja i optymalizacja",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 110,
+      "pattern": "QGroupBox",
+      "key": "tools.kompresja_i_optymalizacja"
+    },
+    {
+      "text": "Zapisz zoptymalizowany",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 124,
+      "pattern": "StyledButton",
+      "key": "tools.zapisz_zoptymalizowany"
+    },
+    {
+      "text": "Numeracja Bates",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 131,
+      "pattern": "QGroupBox",
+      "key": "tools.numeracja_bates"
+    },
+    {
+      "text": "Dodaj numerację Bates",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 145,
+      "pattern": "StyledButton",
+      "key": "tools.dodaj_numerację_bates"
+    },
+    {
+      "text": "Nagłówki i stopki",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 152,
+      "pattern": "QGroupBox",
+      "key": "tools.nagłówki_i_stopki"
+    },
+    {
+      "text": "Dodaj nagłówki/stopki",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 166,
+      "pattern": "StyledButton",
+      "key": "tools.dodaj_nagłówkistopki"
+    },
+    {
+      "text": "N-up (wiele stron na kartce)",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 183,
+      "pattern": "QGroupBox",
+      "key": "tools.n_up_wiele_stron_na_kartce"
+    },
+    {
+      "text": "Stron:",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 198,
+      "pattern": "QLabel",
+      "key": "tools.stron"
+    },
+    {
+      "text": "2 strony",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 204,
+      "pattern": "addItem",
+      "key": "tools.2_strony"
+    },
+    {
+      "text": "4 strony",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 205,
+      "pattern": "addItem",
+      "key": "tools.4_strony"
+    },
+    {
+      "text": "6 stron",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 206,
+      "pattern": "addItem",
+      "key": "tools.6_stron"
+    },
+    {
+      "text": "9 stron",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 207,
+      "pattern": "addItem",
+      "key": "tools.9_stron"
+    },
+    {
+      "text": "Orientacja:",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 214,
+      "pattern": "QLabel",
+      "key": "tools.orientacja"
+    },
+    {
+      "text": "Pozioma",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 219,
+      "pattern": "QCheckBox",
+      "key": "tools.pozioma"
+    },
+    {
+      "text": "Rozmiar:",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 227,
+      "pattern": "QLabel",
+      "key": "tools.rozmiar"
+    },
+    {
+      "text": "A4",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 233,
+      "pattern": "addItem",
+      "key": "tools.a4"
+    },
+    {
+      "text": "A3",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 234,
+      "pattern": "addItem",
+      "key": "tools.a3"
+    },
+    {
+      "text": "Letter",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 235,
+      "pattern": "addItem",
+      "key": "tools.letter"
+    },
+    {
+      "text": "Generuj N-up",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 240,
+      "pattern": "StyledButton",
+      "key": "tools.generuj_n_up"
+    },
+    {
+      "text": "PDF/A Converter",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 247,
+      "pattern": "QGroupBox",
+      "key": "tools.pdfa_converter"
+    },
+    {
+      "text": "Poziom:",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 262,
+      "pattern": "QLabel",
+      "key": "tools.poziom"
+    },
+    {
+      "text": "PDF/A-1b (podstawowy)",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 268,
+      "pattern": "addItem",
+      "key": "tools.pdfa_1b_podstawowy"
+    },
+    {
+      "text": "PDF/A-2b (przezroczystość)",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 269,
+      "pattern": "addItem",
+      "key": "tools.pdfa_2b_przezroczystość"
+    },
+    {
+      "text": "PDF/A-3b (załączniki)",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 270,
+      "pattern": "addItem",
+      "key": "tools.pdfa_3b_załączniki"
+    },
+    {
+      "text": "Waliduj",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 278,
+      "pattern": "StyledButton",
+      "key": "tools.waliduj"
+    },
+    {
+      "text": "Konwertuj",
+      "file": "src\\pdfdeck\\ui\\pages\\tools_page.py",
+      "line": 282,
+      "pattern": "StyledButton",
+      "key": "tools.konwertuj"
+    },
+    {
+      "text": "Watch Folder - Automatyczne przetwarzanie",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 59,
+      "pattern": "QLabel",
+      "key": "watch_folder.watch_folder_automatyczne_przetwarzani"
+    },
+    {
+      "text": "Konfiguracja",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 76,
+      "pattern": "QGroupBox",
+      "key": "watch_folder.konfiguracja"
+    },
+    {
+      "text": "Folder wejściowy:",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 82,
+      "pattern": "QLabel",
+      "key": "watch_folder.folder_wejściowy"
+    },
+    {
+      "text": "Przeglądaj",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 101,
+      "pattern": "StyledButton",
+      "key": "watch_folder.przeglądaj"
+    },
+    {
+      "text": "Folder wyjściowy:",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 109,
+      "pattern": "QLabel",
+      "key": "watch_folder.folder_wyjściowy"
+    },
+    {
+      "text": "Przeglądaj",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 120,
+      "pattern": "StyledButton",
+      "key": "watch_folder.przeglądaj"
+    },
+    {
+      "text": "Profil:",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 128,
+      "pattern": "QLabel",
+      "key": "watch_folder.profil"
+    },
+    {
+      "text": "▶ Uruchom monitorowanie",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 173,
+      "pattern": "StyledButton",
+      "key": "watch_folder.uruchom_monitorowanie"
+    },
+    {
+      "text": "⬛ Zatrzymaj",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 177,
+      "pattern": "StyledButton",
+      "key": "watch_folder.zatrzymaj"
+    },
+    {
+      "text": "Status: zatrzymany",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 183,
+      "pattern": "QLabel",
+      "key": "watch_folder.status_zatrzymany"
+    },
+    {
+      "text": "Log operacji",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 192,
+      "pattern": "QGroupBox",
+      "key": "watch_folder.log_operacji"
+    },
+    {
+      "text": "Wyczyść log",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 218,
+      "pattern": "StyledButton",
+      "key": "watch_folder.wyczyść_log"
+    },
+    {
+      "text": "Przetworzono: 0 | Sukces: 0 | Błędy: 0",
+      "file": "src\\pdfdeck\\ui\\pages\\watch_folder_page.py",
+      "line": 225,
+      "pattern": "QLabel",
+      "key": "watch_folder.przetworzono_0_sukces_0_błędy_0"
+    },
+    {
+      "text": "Dodaj pieczątkę do strony",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 178,
+      "pattern": "StyledButton",
+      "key": "watermark.dodaj_pieczątkę_do_strony"
+    },
+    {
+      "text": "Znak wodny tekstowy",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 264,
+      "pattern": "QGroupBox",
+      "key": "watermark.znak_wodny_tekstowy"
+    },
+    {
+      "text": "Tekst:",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 271,
+      "pattern": "QLabel",
+      "key": "watermark.tekst"
+    },
+    {
+      "text": "Rozmiar:",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 285,
+      "pattern": "QLabel",
+      "key": "watermark.rozmiar"
+    },
+    {
+      "text": "Rotacja:",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 301,
+      "pattern": "QLabel",
+      "key": "watermark.rotacja"
+    },
+    {
+      "text": "Kolor:",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 318,
+      "pattern": "QLabel",
+      "key": "watermark.kolor"
+    },
+    {
+      "text": "Przezr.:",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 330,
+      "pattern": "QLabel",
+      "key": "watermark.przezr"
+    },
+    {
+      "text": "Pozycja:",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 352,
+      "pattern": "QLabel",
+      "key": "watermark.pozycja"
+    },
+    {
+      "text": "Pod tekstem",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 358,
+      "pattern": "addItem",
+      "key": "watermark.pod_tekstem"
+    },
+    {
+      "text": "Nad tekstem",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 359,
+      "pattern": "addItem",
+      "key": "watermark.nad_tekstem"
+    },
+    {
+      "text": "Dodaj znak wodny",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 365,
+      "pattern": "StyledButton",
+      "key": "watermark.dodaj_znak_wodny"
+    },
+    {
+      "text": "Szybkie znaki wodne",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 372,
+      "pattern": "QGroupBox",
+      "key": "watermark.szybkie_znaki_wodne"
+    },
+    {
+      "text": "Podgląd:",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 400,
+      "pattern": "QLabel",
+      "key": "watermark.podgląd"
+    },
+    {
+      "text": "PRZYKŁAD",
+      "file": "src\\pdfdeck\\ui\\pages\\watermark_page.py",
+      "line": 420,
+      "pattern": "QLabel",
+      "key": "watermark.przykład"
+    },
+    {
+      "text": "Wybierz pieczątkę:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 335,
+      "pattern": "QLabel",
+      "key": "stamp_picker.wybierz_pieczątkę"
+    },
+    {
+      "text": "Tekst:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 382,
+      "pattern": "QLabel",
+      "key": "stamp_picker.tekst"
+    },
+    {
+      "text": "Tekst obwód:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 394,
+      "pattern": "QLabel",
+      "key": "stamp_picker.tekst_obwód"
+    },
+    {
+      "text": "Kolor:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 406,
+      "pattern": "QLabel",
+      "key": "stamp_picker.kolor"
+    },
+    {
+      "text": "Zmień",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 419,
+      "pattern": "QPushButton",
+      "key": "stamp_picker.zmień"
+    },
+    {
+      "text": "Kształt:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 445,
+      "pattern": "QLabel",
+      "key": "stamp_picker.kształt"
+    },
+    {
+      "text": "Prostokąt",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 451,
+      "pattern": "addItem",
+      "key": "stamp_picker.prostokąt"
+    },
+    {
+      "text": "Okrągła",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 452,
+      "pattern": "addItem",
+      "key": "stamp_picker.okrągła"
+    },
+    {
+      "text": "Owalna",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 453,
+      "pattern": "addItem",
+      "key": "stamp_picker.owalna"
+    },
+    {
+      "text": "Ramka:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 461,
+      "pattern": "QLabel",
+      "key": "stamp_picker.ramka"
+    },
+    {
+      "text": "Pojedyncza",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 467,
+      "pattern": "addItem",
+      "key": "stamp_picker.pojedyncza"
+    },
+    {
+      "text": "Podwójna",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 468,
+      "pattern": "addItem",
+      "key": "stamp_picker.podwójna"
+    },
+    {
+      "text": "Przerywana",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 469,
+      "pattern": "addItem",
+      "key": "stamp_picker.przerywana"
+    },
+    {
+      "text": "Gruba",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 470,
+      "pattern": "addItem",
+      "key": "stamp_picker.gruba"
+    },
+    {
+      "text": "Cienka",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 471,
+      "pattern": "addItem",
+      "key": "stamp_picker.cienka"
+    },
+    {
+      "text": "Rozmiar:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 485,
+      "pattern": "QLabel",
+      "key": "stamp_picker.rozmiar"
+    },
+    {
+      "text": "Rotacja:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 505,
+      "pattern": "QLabel",
+      "key": "stamp_picker.rotacja"
+    },
+    {
+      "text": "0°",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 517,
+      "pattern": "QLabel",
+      "key": "stamp_picker.0"
+    },
+    {
+      "text": "Przezroczystość:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 531,
+      "pattern": "QLabel",
+      "key": "stamp_picker.przezroczystość"
+    },
+    {
+      "text": "Zużycie:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 551,
+      "pattern": "QLabel",
+      "key": "stamp_picker.zużycie"
+    },
+    {
+      "text": "Brak",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 557,
+      "pattern": "addItem",
+      "key": "stamp_picker.brak"
+    },
+    {
+      "text": "Lekkie",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 558,
+      "pattern": "addItem",
+      "key": "stamp_picker.lekkie"
+    },
+    {
+      "text": "Średnie",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 559,
+      "pattern": "addItem",
+      "key": "stamp_picker.średnie"
+    },
+    {
+      "text": "Mocne",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 560,
+      "pattern": "addItem",
+      "key": "stamp_picker.mocne"
+    },
+    {
+      "text": "Starodruk:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 568,
+      "pattern": "QLabel",
+      "key": "stamp_picker.starodruk"
+    },
+    {
+      "text": "Efekt letterpress",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 573,
+      "pattern": "QCheckBox",
+      "key": "stamp_picker.efekt_letterpress"
+    },
+    {
+      "text": "Podwójne:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 601,
+      "pattern": "QLabel",
+      "key": "stamp_picker.podwójne"
+    },
+    {
+      "text": "Efekt podwójnego odbicia",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 606,
+      "pattern": "QCheckBox",
+      "key": "stamp_picker.efekt_podwójnego_odbicia"
+    },
+    {
+      "text": "Rozbryzgi:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 634,
+      "pattern": "QLabel",
+      "key": "stamp_picker.rozbryzgi"
+    },
+    {
+      "text": "Kropelki tuszu wokół",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 639,
+      "pattern": "QCheckBox",
+      "key": "stamp_picker.kropelki_tuszu_wokół"
+    },
+    {
+      "text": "Data:",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 667,
+      "pattern": "QLabel",
+      "key": "stamp_picker.data"
+    },
+    {
+      "text": "Wstaw [DATA] → dziś",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 672,
+      "pattern": "QCheckBox",
+      "key": "stamp_picker.wstaw_data_dziś"
+    },
+    {
+      "text": "Dodaj pieczątkę",
+      "file": "src\\pdfdeck\\ui\\widgets\\stamp_picker.py",
+      "line": 715,
+      "pattern": "QPushButton",
+      "key": "stamp_picker.dodaj_pieczątkę"
+    }
+  ]
+}

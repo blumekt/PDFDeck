@@ -17,6 +17,7 @@ from pdfdeck.core.models import (
     Point,
     WhiteoutConfig,
     LinkConfig,
+    LinkInfo,
     WatermarkConfig,
     StampConfig,
     StampShape,
@@ -354,6 +355,37 @@ class PDFManager:
         page = self._doc[page_index]
         rect = pymupdf.Rect(config.rect.as_tuple)
 
+        # Jeśli podano tekst wyświetlany, dodaj go na stronę
+        if config.display_text:
+            # Oblicz szerokość tekstu
+            fontsize = 11
+            text_width = pymupdf.get_text_length(
+                config.display_text, fontname="helv", fontsize=fontsize
+            )
+            # Dopasuj prostokąt do tekstu
+            text_rect = pymupdf.Rect(
+                rect.x0, rect.y0,
+                rect.x0 + text_width + 4,  # +4 dla marginesu
+                rect.y0 + fontsize + 4
+            )
+            # Wstaw tekst linku (niebieski)
+            page.insert_text(
+                (text_rect.x0, text_rect.y0 + fontsize),
+                config.display_text,
+                fontname="helv",
+                fontsize=fontsize,
+                color=(0, 0, 0.8),  # Niebieski kolor linku
+            )
+            # Dodaj podkreślenie
+            page.draw_line(
+                (text_rect.x0, text_rect.y0 + fontsize + 1),
+                (text_rect.x0 + text_width, text_rect.y0 + fontsize + 1),
+                color=(0, 0, 0.8),
+                width=0.5
+            )
+            # Zaktualizuj rect dla linku
+            rect = text_rect
+
         link_dict: Dict[str, Any] = {"from": rect}
 
         if config.uri:
@@ -373,6 +405,94 @@ class PDFManager:
 
         page.insert_link(link_dict)
         self._modified = True
+
+    def get_page_links(self, page_index: int) -> List[LinkInfo]:
+        """
+        Pobiera listę linków ze strony.
+
+        Args:
+            page_index: Indeks strony
+
+        Returns:
+            Lista obiektów LinkInfo
+        """
+        if not self._doc:
+            raise ValueError("Brak załadowanego dokumentu")
+
+        page = self._doc[page_index]
+        links = page.get_links()
+        result: List[LinkInfo] = []
+
+        for idx, link in enumerate(links):
+            # Pobierz prostokąt linku
+            from_rect = link.get("from", pymupdf.Rect(0, 0, 0, 0))
+            rect = Rect(from_rect.x0, from_rect.y0, from_rect.x1, from_rect.y1)
+
+            # Określ typ linku
+            kind = link.get("kind", pymupdf.LINK_NONE)
+            uri = link.get("uri")
+            target_page = link.get("page")
+
+            if kind == pymupdf.LINK_URI:
+                link_type = "url"
+            elif kind == pymupdf.LINK_GOTO:
+                link_type = "page"
+            elif kind == pymupdf.LINK_LAUNCH:
+                link_type = "file"
+                uri = link.get("file", link.get("uri"))
+            elif kind == pymupdf.LINK_GOTOR:
+                link_type = "file"
+                uri = link.get("file", link.get("uri"))
+            else:
+                link_type = "unknown"
+
+            result.append(LinkInfo(
+                index=idx,
+                rect=rect,
+                link_type=link_type,
+                uri=uri,
+                target_page=target_page,
+                raw_dict=link
+            ))
+
+        return result
+
+    def delete_link(self, page_index: int, link_index: int) -> None:
+        """
+        Usuwa link ze strony.
+
+        Args:
+            page_index: Indeks strony
+            link_index: Indeks linku na stronie
+        """
+        if not self._doc:
+            raise ValueError("Brak załadowanego dokumentu")
+
+        page = self._doc[page_index]
+        links = page.get_links()
+
+        if link_index < 0 or link_index >= len(links):
+            raise IndexError(f"Nieprawidłowy indeks linku: {link_index}")
+
+        link_to_delete = links[link_index]
+        page.delete_link(link_to_delete)
+        self._modified = True
+
+    def update_link(self, page_index: int, link_index: int, config: LinkConfig) -> None:
+        """
+        Aktualizuje istniejący link.
+
+        Args:
+            page_index: Indeks strony
+            link_index: Indeks linku na stronie
+            config: Nowa konfiguracja linku
+        """
+        if not self._doc:
+            raise ValueError("Brak załadowanego dokumentu")
+
+        # PyMuPDF nie ma natywnego update_link, więc usuwamy i wstawiamy nowy
+        self.delete_link(page_index, link_index)
+        self.insert_link(page_index, config)
 
     def get_page_images(self, page_index: int) -> List[Dict[str, Any]]:
         """
@@ -533,8 +653,13 @@ class PDFManager:
                 page.add_redact_annot(rect, fill=color)
 
         # Zastosuj redakcje (nieodwracalne!)
+        # Parametry: usuń obrazy które nachodzą, usuń grafikę wektorową, usuń tekst
         for page_idx in by_page.keys():
-            self._doc[page_idx].apply_redactions()
+            self._doc[page_idx].apply_redactions(
+                images=pymupdf.PDF_REDACT_IMAGE_REMOVE,
+                graphics=pymupdf.PDF_REDACT_LINE_ART_IF_TOUCHED,
+                text=True,
+            )
 
         self._modified = True
 
@@ -557,28 +682,97 @@ class PDFManager:
 
         target_pages = pages if pages else range(self.page_count)
 
+        # Renderuj tekst znaku wodnego jako PNG z przezroczystością
+        # Rotacja jest już wliczona w renderowaniu
+        watermark_image = self._render_watermark_image(config)
+
         for page_idx in target_pages:
             page = self._doc[page_idx]
             rect = page.rect
 
+            # Oblicz rozmiar obrazu znaku wodnego dla strony
+            # Skaluj tak, aby był czytelny ale nie dominował
+            page_diag = (rect.width**2 + rect.height**2) ** 0.5
+            watermark_width = page_diag * 0.8  # 80% przekątnej strony
+
             # Środek strony
-            center = pymupdf.Point(rect.width / 2, rect.height / 2)
+            center_x = rect.width / 2
+            center_y = rect.height / 2
 
-            # Oblicz rozmiar tekstu
-            tw = pymupdf.TextWriter(page.rect)
+            # Wstaw obraz
+            watermark_rect = pymupdf.Rect(
+                center_x - watermark_width / 2,
+                center_y - watermark_width / 2,
+                center_x + watermark_width / 2,
+                center_y + watermark_width / 2,
+            )
 
-            # Wstaw tekst z rotacją
-            page.insert_text(
-                center,
-                config.text,
-                fontname="helv",
-                fontsize=config.font_size,
-                color=config.color,
-                rotate=config.rotation,
-                overlay=config.overlay,
+            page.insert_image(
+                watermark_rect,
+                stream=watermark_image,
+                overlay=True,  # Zawsze ponad zawartością
             )
 
         self._modified = True
+
+    def _render_watermark_image(self, config: WatermarkConfig) -> bytes:
+        """
+        Renderuje tekst znaku wodnego jako PNG z przezroczystością i rotacją.
+
+        Returns:
+            PNG bytes z kanałem alpha
+        """
+        from PIL import Image, ImageDraw, ImageFont
+        import io
+
+        # Parametry obrazu
+        dpi = 150
+        font_size = int(config.font_size * dpi / 72)  # Konwersja z punktów na piksele
+        margin = 40  # Większy margines dla rotacji
+
+        # Utwórz tymczasowy obraz aby zmierzyć tekst
+        temp_img = Image.new("RGBA", (100, 100), (0, 0, 0, 0))
+        temp_draw = ImageDraw.Draw(temp_img)
+
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)
+        except (OSError, IOError):
+            # Fallback na domyślną czcionkę
+            font = ImageFont.load_default()
+
+        # Zmierz tekst
+        bbox = temp_draw.textbbox((0, 0), config.text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+
+        # Utwórz docelowy obraz z marginesem
+        img_width = int(text_width) + margin * 2
+        img_height = int(text_height) + margin * 2
+        img = Image.new("RGBA", (img_width, img_height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+
+        # Rysuj tekst na środku
+        x = (img_width - text_width) / 2
+        y = (img_height - text_height) / 2
+
+        # Konwertuj opacity do kanału alpha (0.0-1.0 -> 0-255)
+        alpha = int(config.opacity * 255)
+        color_rgb = tuple(int(c * 255) for c in config.color)
+        color_rgba = (*color_rgb, alpha)
+
+        draw.text((x, y), config.text, font=font, fill=color_rgba)
+
+        # Zastosuj rotację
+        rotation_angle = config.rotation
+        if rotation_angle != 0:
+            # Obrócić obraz - expand=True aby zachować całą zawartość
+            img = img.rotate(rotation_angle, expand=True, resample=Image.Resampling.BICUBIC)
+
+        # Konwertuj do PNG bytes
+        buffer = io.BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+        return buffer.read()
 
     def add_stamp(self, page_index: int, config: StampConfig) -> None:
         """
@@ -599,10 +793,12 @@ class PDFManager:
 
         page = self._doc[page_index]
 
-        # Losowa rotacja dla naturalnego wyglądu
-        rotation = config.rotation
-        if rotation == 0:
-            rotation = random.uniform(-2, 2)
+        # PyMuPDF insert_image rotate akceptuje tylko 0, 90, 180, 270
+        # Małe rotacje dla naturalności muszą być zrobione inaczej (pre-processing obrazu)
+        # Na razie używamy tylko wielokrotności 90
+        rotation = int(config.rotation) % 360
+        if rotation not in (0, 90, 180, 270):
+            rotation = 0
 
         # Oblicz rozmiar pieczątki
         width = config.width * config.scale
@@ -628,25 +824,25 @@ class PDFManager:
                 rotate=rotation,
             )
         else:
-            # Nowe: dynamiczne generowanie
+            # Dynamiczne generowanie - zawsze PNG
             renderer = StampRenderer()
+            png_data = renderer.render_to_png(config)
 
-            # Użyj PNG dla efektów rastrowych (wear, opacity < 1)
-            # lub SVG dla prostych przypadków
-            if config.wear_level != WearLevel.NONE or config.opacity < 1.0:
-                png_data = renderer.render_to_png(config)
+            # Zapisz do tymczasowego pliku (PyMuPDF lepiej obsługuje pliki)
+            import tempfile
+            import os
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                tmp.write(png_data)
+                tmp_path = tmp.name
+
+            try:
                 page.insert_image(
                     stamp_rect,
-                    stream=png_data,
+                    filename=tmp_path,
                     rotate=rotation,
                 )
-            else:
-                svg_data = renderer.render_to_svg(config)
-                page.insert_image(
-                    stamp_rect,
-                    stream=svg_data.encode("utf-8"),
-                    rotate=rotation,
-                )
+            finally:
+                os.unlink(tmp_path)
 
         self._modified = True
 

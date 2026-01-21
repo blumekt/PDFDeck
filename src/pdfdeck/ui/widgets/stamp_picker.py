@@ -711,30 +711,6 @@ class StampPicker(QWidget):
 
         layout.addWidget(preview_group)
 
-        # === Przycisk zatwierdzenia ===
-        self._apply_btn = QPushButton("Dodaj pieczątkę")
-        self._apply_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #e0a800;
-                border: none;
-                border-radius: 6px;
-                padding: 12px 24px;
-                color: #1a1a2e;
-                font-weight: bold;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #f0b800;
-            }
-            QPushButton:disabled {
-                background-color: #3d4a5c;
-                color: #8892a0;
-            }
-        """)
-        self._apply_btn.setEnabled(False)
-        self._apply_btn.clicked.connect(self._on_apply)
-        layout.addWidget(self._apply_btn)
-
         layout.addStretch()
 
         scroll.setWidget(content)
@@ -772,7 +748,6 @@ class StampPicker(QWidget):
                     self._border_combo.setCurrentIndex(i)
                     break
 
-        self._apply_btn.setEnabled(True)
         self._update_preview()
 
     def _on_custom_text_changed(self, text: str) -> None:
@@ -868,8 +843,9 @@ class StampPicker(QWidget):
             text = stamp["text"]
             color_hex = stamp["color"]
             circular_text = stamp.get("circular_text")
-            shape_str = stamp.get("shape", "rectangle")
-            border_str = stamp.get("border_style", "solid")
+            # Kształt i styl ramki zawsze z combo (użytkownik może zmienić)
+            shape_str = self._shape_combo.currentData()
+            border_str = self._border_combo.currentData()
         elif self._custom_text:
             text = self._custom_text.upper()
             color_hex = self._custom_color
@@ -945,12 +921,6 @@ class StampPicker(QWidget):
         except Exception as e:
             # Fallback do prostego podglądu tekstowego
             self._preview_label.setText(f"Podgląd: {config.text}")
-
-    def _on_apply(self) -> None:
-        """Emituje wybraną pieczątkę jako StampConfig."""
-        config = self._build_config()
-        if config:
-            self.stamp_selected.emit(config)
 
     def get_stamp_config(self) -> Optional[StampConfig]:
         """Zwraca aktualną konfigurację pieczątki."""

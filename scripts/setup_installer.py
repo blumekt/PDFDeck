@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Universal Installer Setup Script v1.0
+Universal Installer Setup Script v1.1
 
 Portable setup script for adding Windows installer infrastructure to desktop applications.
 Copy this script to any new project - it will auto-configure itself.
@@ -8,8 +8,9 @@ Copy this script to any new project - it will auto-configure itself.
 Features:
 - Auto-detection of project configuration from pyproject.toml
 - Support for multiple UI frameworks (PyQt6, CustomTkinter, CLI)
-- Generates PyInstaller spec, Inno Setup script, version info
+- Generates PyInstaller spec (Anti-Virus friendly), Inno Setup script, version info
 - Full environment validation (--check flag)
+- Architecture detection (x64/x86)
 - Dry-run mode, rollback on errors
 - Colored terminal output
 
@@ -36,21 +37,20 @@ from __future__ import annotations
 
 import argparse
 import platform
-import re
 import shutil
 import subprocess
 import sys
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional
 from datetime import datetime
 
 # ============================================================================
 # CONSTANTS
 # ============================================================================
 
-SCRIPT_VERSION = "1.0"
+SCRIPT_VERSION = "1.1"
 MIN_PYTHON_VERSION = (3, 9)
 
 SUPPORTED_FRAMEWORKS = ["pyqt6", "customtkinter", "cli"]
@@ -164,6 +164,7 @@ class InstallerConfig:
     app_name_lower: str = ""
     version: str = "1.0.0"
     current_year: int = field(default_factory=lambda: datetime.now().year)
+    is_64bit: bool = field(default_factory=lambda: sys.maxsize > 2**32)
 
     @classmethod
     def load(cls, project_root: Optional[Path] = None) -> "InstallerConfig":
@@ -388,7 +389,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # UPX is disabled to prevent False Positives from Antivirus
     console={console},
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -405,7 +406,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name='{app_name}',
 )
@@ -481,6 +482,7 @@ AppPublisher={{#MyAppPublisher}}
 AppPublisherURL={{#MyAppURL}}
 AppSupportURL={{#MyAppURL}}
 AppUpdatesURL={{#MyAppURL}}
+AppMutex={{#MyAppName}}Mutex
 
 ; Install location
 DefaultDirName={{autopf}}\\{{#MyAppName}}
@@ -527,9 +529,8 @@ CloseApplications=force
 CloseApplicationsFilter={app_name}.exe
 RestartApplications=yes
 
-; Architecture - 64-bit Windows only
-ArchitecturesAllowed=x64compatible
-ArchitecturesInstallIn64BitMode=x64compatible
+; Architecture Settings
+{architecture_section}
 
 {languages_section}
 
@@ -694,7 +695,7 @@ class EnvironmentChecker:
     def check_python(self) -> None:
         """Check Python version."""
         current = sys.version_info[:2]
-        log(f"Current: Python {current[0]}.{current[1]}", "check")
+        log(f"Current: Python {current[0]}.{current[1]} ({'64-bit' if self.config.is_64bit else '32-bit'})", "check")
         log(f"Required: Python {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}+", "check")
 
         if current >= MIN_PYTHON_VERSION:
@@ -867,6 +868,7 @@ class SetupManager:
         log(f"App: {self.config.app_name}", "info")
         log(f"Version: {self.config.version}", "info")
         log(f"Framework: {self.config.ui_framework}", "info")
+        log(f"Arch: {'64-bit' if self.config.is_64bit else '32-bit'}", "info")
         log(f"Mode: {'DRY-RUN' if self.dry_run else 'PRODUCTION'}", "info")
 
         try:
@@ -959,12 +961,13 @@ class SetupManager:
         """Generate file_version_info.txt."""
         subheader("Step 4: Generate Version Info")
 
-        # Parse version to tuple
-        version_parts = self.config.version.replace("-", ".").split(".")
-        version_parts = [p for p in version_parts if p.isdigit()][:4]
+        # Parse version to tuple (cleaning non-digit suffix)
+        clean_version = re.sub(r'[^\d.]+', '', self.config.version)
+        version_parts = clean_version.split(".")
+        # Pad with zeros to 4 parts
         while len(version_parts) < 4:
             version_parts.append("0")
-        version_tuple = f"({', '.join(version_parts)})"
+        version_tuple = f"({', '.join(version_parts[:4])})"
 
         # Year range
         start_year = 2024
@@ -1010,6 +1013,12 @@ class SetupManager:
             icon_rel = "..\\" + self.config.icon_path.replace("/", "\\")
             icon_line = f"SetupIconFile={icon_rel}"
 
+        # Architecture section
+        if self.config.is_64bit:
+            architecture_section = "; Architecture - 64-bit Windows\nArchitecturesAllowed=x64compatible\nArchitecturesInstallIn64BitMode=x64compatible"
+        else:
+            architecture_section = "; Architecture - 32-bit Windows\n; (No specific architecture flags needed for x86)"
+
         content = TemplateRegistry.ISS_TEMPLATE.format(
             app_name=self.config.app_name,
             app_name_lower=self.config.app_name_lower,
@@ -1022,6 +1031,7 @@ class SetupManager:
             icon_line=icon_line,
             languages_section=languages_section,
             custom_messages_section=custom_messages_section,
+            architecture_section=architecture_section,
         )
 
         iss_path = self.config.resolve_path(
@@ -1037,13 +1047,13 @@ class SetupManager:
 {C.CYAN}Build Process:{C.RESET}
 
   1. Build executable with PyInstaller:
-     pyinstaller {self.config.app_name_lower}.spec
+      pyinstaller {self.config.app_name_lower}.spec
 
   2. Create installer with Inno Setup:
-     ISCC.exe {self.config.installer_dir}/{self.config.app_name_lower}_installer.iss
+      ISCC.exe {self.config.installer_dir}/{self.config.app_name_lower}_installer.iss
 
   3. Find installer in:
-     {self.config.release_dir}/{self.config.app_name}_Setup_{self.config.version}.exe
+      {self.config.release_dir}/{self.config.app_name}_Setup_{self.config.version}.exe
 
 {C.YELLOW}Or use the release script (if available):{C.RESET}
   python scripts/release.py {self.config.version}

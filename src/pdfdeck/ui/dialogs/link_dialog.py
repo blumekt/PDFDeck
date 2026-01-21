@@ -1,10 +1,11 @@
 """
-LinkDialog - Dialog do dodawania hiperłączy.
+LinkDialog - Dialog do dodawania i edycji hiperłączy.
 
 Funkcje:
 - Wstawianie linków URL
 - Linki do stron dokumentu
 - Linki do innych plików
+- Edycja istniejących linków
 """
 
 from typing import Optional
@@ -16,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt
 
-from pdfdeck.core.models import LinkConfig, Rect
+from pdfdeck.core.models import LinkConfig, LinkInfo, Rect
 from pdfdeck.ui.widgets.styled_button import StyledButton
 
 
@@ -28,16 +29,29 @@ class LinkDialog(QDialog):
     - Dodać link do URL
     - Dodać link do strony dokumentu
     - Dodać link do zewnętrznego pliku
+    - Edytować istniejący link
     """
 
-    def __init__(self, rect: Rect = None, max_pages: int = 1, parent=None):
+    def __init__(
+        self,
+        rect: Rect = None,
+        max_pages: int = 1,
+        existing_link: LinkInfo = None,
+        parent=None
+    ):
         super().__init__(parent)
 
         self._rect = rect or Rect(0, 0, 100, 20)
         self._max_pages = max_pages
+        self._existing_link = existing_link
         self._config: Optional[LinkConfig] = None
+        self._edit_mode = existing_link is not None
 
-        self.setWindowTitle("Dodaj link")
+        # Tytuł zależny od trybu
+        if self._edit_mode:
+            self.setWindowTitle("Edytuj link")
+        else:
+            self.setWindowTitle("Dodaj link")
         self.setMinimumWidth(450)
         self.setStyleSheet("""
             QDialog {
@@ -235,14 +249,57 @@ class LinkDialog(QDialog):
         cancel_btn.clicked.connect(self.reject)
         buttons_layout.addWidget(cancel_btn)
 
-        apply_btn = StyledButton("Dodaj link", "primary")
-        apply_btn.clicked.connect(self._on_apply)
-        buttons_layout.addWidget(apply_btn)
+        # Tekst przycisku zależny od trybu
+        apply_text = "Zapisz" if self._edit_mode else "Dodaj link"
+        self._apply_btn = StyledButton(apply_text, "primary")
+        self._apply_btn.clicked.connect(self._on_apply)
+        buttons_layout.addWidget(self._apply_btn)
 
         layout.addLayout(buttons_layout)
 
         # Zmienne stanu
         self._selected_file: Optional[str] = None
+
+        # Wypełnij dane jeśli edytujemy istniejący link
+        if self._edit_mode and self._existing_link:
+            self._populate_from_existing()
+
+    def _populate_from_existing(self) -> None:
+        """Wypełnia pola danymi z istniejącego linku."""
+        link = self._existing_link
+        if not link:
+            return
+
+        # Ustaw typ linku
+        if link.link_type == "url":
+            self._url_radio.setChecked(True)
+            self._url_group.setVisible(True)
+            self._page_group.setVisible(False)
+            self._file_group.setVisible(False)
+            if link.uri:
+                self._url_input.setText(link.uri)
+
+        elif link.link_type == "page":
+            self._page_radio.setChecked(True)
+            self._url_group.setVisible(False)
+            self._page_group.setVisible(True)
+            self._file_group.setVisible(False)
+            if link.target_page is not None:
+                self._page_spin.setValue(link.target_page + 1)  # 1-indexed w UI
+
+        elif link.link_type == "file":
+            self._file_radio.setChecked(True)
+            self._url_group.setVisible(False)
+            self._page_group.setVisible(False)
+            self._file_group.setVisible(True)
+            if link.uri:
+                self._selected_file = link.uri
+                from pathlib import Path
+                self._file_path_label.setText(Path(link.uri).name)
+                self._file_path_label.setStyleSheet(
+                    "color: #ffffff; background-color: #0f1629; "
+                    "padding: 8px; border-radius: 4px;"
+                )
 
     def _on_type_changed(self, button: QRadioButton) -> None:
         """Obsługa zmiany typu linku."""
@@ -317,7 +374,7 @@ class LinkDialog(QDialog):
     @staticmethod
     def get_link_config(rect: Rect, max_pages: int = 1, parent=None) -> Optional[LinkConfig]:
         """
-        Statyczna metoda do szybkiego uzyskania konfiguracji.
+        Statyczna metoda do szybkiego uzyskania konfiguracji (dodawanie).
 
         Args:
             rect: Prostokąt linku
@@ -327,7 +384,34 @@ class LinkDialog(QDialog):
         Returns:
             LinkConfig lub None jeśli anulowano
         """
-        dialog = LinkDialog(rect, max_pages, parent)
+        dialog = LinkDialog(rect, max_pages, parent=parent)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            return dialog.get_config()
+        return None
+
+    @staticmethod
+    def edit_link_config(
+        existing_link: LinkInfo,
+        max_pages: int = 1,
+        parent=None
+    ) -> Optional[LinkConfig]:
+        """
+        Statyczna metoda do edycji istniejącego linku.
+
+        Args:
+            existing_link: Istniejący link do edycji
+            max_pages: Maksymalna liczba stron (dla linków wewnętrznych)
+            parent: Widget rodzic
+
+        Returns:
+            LinkConfig z nowymi danymi lub None jeśli anulowano
+        """
+        dialog = LinkDialog(
+            rect=existing_link.rect,
+            max_pages=max_pages,
+            existing_link=existing_link,
+            parent=parent
+        )
         if dialog.exec() == QDialog.DialogCode.Accepted:
             return dialog.get_config()
         return None

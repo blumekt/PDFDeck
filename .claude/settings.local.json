@@ -16,7 +16,20 @@
       "Bash(git init:*)",
       "Bash(gh repo view:*)",
       "Bash(gh repo create:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(gh auth refresh:*)",
+      "Bash(python -m mypy:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(python scripts/setup_updater.py:*)",
+      "Bash(python scripts/setup_installer.py:*)",
+      "Bash(python:*)",
+      "Bash(exit 0)",
+      "Bash(ruff check:*)",
+      "Bash(mypy:*)"
     ]
   }
 }

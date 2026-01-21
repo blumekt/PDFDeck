@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Universal Release Script v2.0
+Universal Release Script v2.1
 
 Portable release automation script for desktop applications.
 Copy this entire 'scripts' folder to any new project - it will auto-configure itself.
@@ -32,6 +32,7 @@ Configuration:
     installer_name = "MyApp_Setup_{version}.exe"
     spec_file = "myapp.spec"
     installer_iss = "installer/myapp_installer.iss"
+    init_file = "src/myapp/__init__.py"  # Optional override
 """
 
 from __future__ import annotations
@@ -55,7 +56,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 # CONSTANTS
 # ============================================================================
 
-SCRIPT_VERSION = "2.0"
+SCRIPT_VERSION = "2.1"
 MIN_PYTHON_VERSION = (3, 9)
 
 # Required files for release
@@ -160,6 +161,7 @@ class Config:
     pyproject_toml: str = "pyproject.toml"
     installer_iss: str = "installer/{app_name}_installer.iss"
     version_info: str = "file_version_info.txt"
+    init_file: str = "src/{app_name}/__init__.py"  # Default location for __init__.py
     release_dir: str = "release"
     dist_dir: str = "dist"
     latest_yml: str = "release/latest.yml"
@@ -241,14 +243,18 @@ class Config:
         )
 
         # Override with custom values from config
-        for key in ["pyproject_toml", "installer_iss", "version_info",
-                    "release_dir", "dist_dir", "latest_yml", "beta_yml",
-                    "installer_name", "spec_file"]:
+        configurable_paths = [
+            "pyproject_toml", "installer_iss", "version_info", "init_file",
+            "release_dir", "dist_dir", "latest_yml", "beta_yml",
+            "installer_name", "spec_file"
+        ]
+
+        for key in configurable_paths:
             if key in release_config:
                 setattr(config, key, release_config[key])
 
         # Replace {app_name} placeholder in paths
-        for attr in ["installer_iss", "installer_name", "spec_file"]:
+        for attr in ["installer_iss", "installer_name", "spec_file", "init_file"]:
             value = getattr(config, attr)
             setattr(config, attr, value.replace("{app_name}", app_name.lower()))
 
@@ -562,6 +568,7 @@ class EnvironmentChecker:
         log(f"Releases repo: {self.config.releases_repo or '(not set)'}", "check")
         log(f"Installer name: {self.config.installer_name}", "check")
         log(f"Spec file: {self.config.spec_file}", "check")
+        log(f"Init file: {self.config.init_file}", "check")
 
         if not self.config.app_name:
             self.errors.append("app_name not configured in pyproject.toml")
@@ -820,7 +827,7 @@ class ReleaseManager:
         pyproject_path = self.config.resolve_path(self.config.pyproject_toml)
         installer_path = self.config.resolve_path(self.config.installer_iss)
         version_info_path = self.config.resolve_path(self.config.version_info)
-        init_py_path = self.config.resolve_path("src/pdfdeck/__init__.py")
+        init_py_path = self.config.resolve_path(self.config.init_file)
 
         if pyproject_path.exists():
             self.orig_pyproject = pyproject_path.read_text(encoding="utf-8")
@@ -900,7 +907,7 @@ class ReleaseManager:
                 version_info_path.write_text(content, encoding="utf-8")
                 log(f"file_version_info.txt -> {self.version}", "ok")
 
-            # Update src/pdfdeck/__init__.py
+            # Update __init__.py (dynamically resolved)
             if init_py_path.exists():
                 content = init_py_path.read_text(encoding="utf-8")
                 content = re.sub(
@@ -909,12 +916,15 @@ class ReleaseManager:
                     content
                 )
                 init_py_path.write_text(content, encoding="utf-8")
-                log(f"__init__.py -> {self.version}", "ok")
+                log(f"{init_py_path.name} -> {self.version}", "ok")
+            else:
+                log(f"{init_py_path.name} not found (skipped)", "warn")
+
         else:
             log(f"pyproject.toml -> {self.version}", "dry")
             log(f"installer.iss -> {self.version}", "dry")
             log(f"file_version_info.txt -> {self.version}", "dry")
-            log(f"__init__.py -> {self.version}", "dry")
+            log(f"{init_py_path.name} -> {self.version}", "dry")
 
     def step3_build(self) -> None:
         """Step 3: Build application."""
@@ -1030,6 +1040,10 @@ releaseDate: '{datetime.now(timezone.utc).isoformat()}'
             files = [self.config.pyproject_toml, self.config.installer_iss,
                      self.config.version_info, self.config.latest_yml, self.config.beta_yml]
 
+        # Add init file if it exists and was modified
+        if self.config.resolve_path(self.config.init_file).exists():
+            files.append(self.config.init_file)
+
         # Add files
         for file in files:
             file_path = self.config.resolve_path(file)
@@ -1137,60 +1151,58 @@ releaseDate: '{datetime.now(timezone.utc).isoformat()}'
             log("Would clone releases repo and push yml files", "dry")
             return
 
-        temp_dir = None
         original_cwd = os.getcwd()
 
         try:
-            # Create temp directory
-            temp_dir = Path(tempfile.mkdtemp(prefix="release_yml_"))
-            repo_dir = temp_dir / "releases"
+            # Create temp directory using Context Manager (auto cleanup)
+            with tempfile.TemporaryDirectory(prefix="release_yml_") as temp_dir_str:
+                temp_dir = Path(temp_dir_str)
+                repo_dir = temp_dir / "releases"
 
-            # Clone releases repo
-            log("Cloning releases repo...", "step")
-            success, _ = run(
-                f'git clone --depth 1 https://github.com/{self.config.releases_repo}.git "{repo_dir}"',
-                silent=True
-            )
-            if not success:
-                raise ValueError("Failed to clone releases repo")
-
-            # Copy yml files
-            yml_files = []
-            if not self.beta:
-                yml_files.append(self.config.resolve_path(self.config.latest_yml))
-            yml_files.append(self.config.resolve_path(self.config.beta_yml))
-
-            for yml_file in yml_files:
-                if yml_file.exists():
-                    dst = repo_dir / yml_file.name
-                    shutil.copy2(yml_file, dst)
-                    log(f"Copied {yml_file.name}", "ok")
-
-            # Commit and push
-            os.chdir(repo_dir)
-
-            run("git add *.yml", silent=True)
-
-            commit_msg = f"update: yml files for v{self.version}"
-            success, _ = run(f'git commit -m "{commit_msg}"', silent=True)
-
-            if success:
-                log("Pushing to releases repo...", "step")
-                success, _ = run("git push origin main", silent=True)
+                # Clone releases repo
+                log("Cloning releases repo...", "step")
+                success, _ = run(
+                    f'git clone --depth 1 https://github.com/{self.config.releases_repo}.git "{repo_dir}"',
+                    silent=True
+                )
                 if not success:
-                    log("Failed to push yml to releases repo (non-fatal)", "warn")
+                    raise ValueError("Failed to clone releases repo")
+
+                # Copy yml files
+                yml_files = []
+                if not self.beta:
+                    yml_files.append(self.config.resolve_path(self.config.latest_yml))
+                yml_files.append(self.config.resolve_path(self.config.beta_yml))
+
+                for yml_file in yml_files:
+                    if yml_file.exists():
+                        dst = repo_dir / yml_file.name
+                        shutil.copy2(yml_file, dst)
+                        log(f"Copied {yml_file.name}", "ok")
+
+                # Commit and push
+                os.chdir(repo_dir)
+
+                run("git add *.yml", silent=True)
+
+                commit_msg = f"update: yml files for v{self.version}"
+                success, _ = run(f'git commit -m "{commit_msg}"', silent=True)
+
+                if success:
+                    log("Pushing to releases repo...", "step")
+                    success, _ = run("git push origin main", silent=True)
+                    if not success:
+                        log("Failed to push yml to releases repo (non-fatal)", "warn")
+                    else:
+                        log("YML files pushed to releases repo", "ok")
                 else:
-                    log("YML files pushed to releases repo", "ok")
-            else:
-                log("No yml changes to commit", "info")
+                    log("No yml changes to commit", "info")
 
         except Exception as e:
             log(f"Failed to push yml to releases repo: {e} (non-fatal)", "warn")
         finally:
-            # Return to original directory and cleanup
+            # Return to original directory
             os.chdir(original_cwd)
-            if temp_dir and temp_dir.exists():
-                shutil.rmtree(temp_dir, ignore_errors=True)
 
     def show_summary(self) -> None:
         """Show release summary."""
@@ -1256,6 +1268,7 @@ def parse_args() -> argparse.Namespace:
   releases_repo = "username/myapp-releases"
   installer_name = "MyApp_Setup_{{version}}.exe"
   spec_file = "myapp.spec"
+  init_file = "src/myapp/__init__.py"
 
 {C.CYAN}What it does:{C.RESET}
   1. Updates version in pyproject.toml, installer.iss, file_version_info.txt

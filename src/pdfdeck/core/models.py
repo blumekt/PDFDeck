@@ -69,9 +69,48 @@ class WhiteoutConfig:
 class LinkConfig:
     """Konfiguracja hiperłącza."""
     rect: Rect
-    uri: Optional[str] = None  # Dla linków zewnętrznych
+    link_type: str = "url"  # "url", "page", "file"
+    uri: Optional[str] = None  # Dla linków zewnętrznych i plików
     target_page: Optional[int] = None  # Dla linków wewnętrznych
     target_point: Optional[Point] = None
+    display_text: Optional[str] = None  # Opcjonalny tekst wyświetlany
+
+
+@dataclass
+class LinkInfo:
+    """Informacje o istniejącym linku w dokumencie."""
+    index: int  # Indeks linku na stronie
+    rect: Rect
+    link_type: str  # "url", "page", "file", "unknown"
+    uri: Optional[str] = None  # Adres URL lub ścieżka pliku
+    target_page: Optional[int] = None  # Numer strony docelowej (0-indexed)
+    raw_dict: Optional[dict] = None  # Oryginalny słownik PyMuPDF
+
+    @property
+    def display_label(self) -> str:
+        """Czytelna etykieta linku do wyświetlenia w UI."""
+        if self.link_type == "url" and self.uri:
+            # Skróć długie URL-e
+            if len(self.uri) > 50:
+                return self.uri[:47] + "..."
+            return self.uri
+        elif self.link_type == "page" and self.target_page is not None:
+            return f"Strona {self.target_page + 1}"
+        elif self.link_type == "file" and self.uri:
+            from pathlib import Path
+            return Path(self.uri).name
+        return "Nieznany link"
+
+    @property
+    def type_label(self) -> str:
+        """Etykieta typu linku."""
+        type_labels = {
+            "url": "URL",
+            "page": "Wewnętrzny",
+            "file": "Plik",
+            "unknown": "Inny"
+        }
+        return type_labels.get(self.link_type, "Inny")
 
 
 @dataclass
@@ -82,7 +121,7 @@ class WatermarkConfig:
     color: Tuple[float, float, float] = (0.5, 0.5, 0.5)  # Gray
     rotation: float = 45.0  # Stopnie
     opacity: float = 0.3  # 0.0 - 1.0
-    overlay: bool = False  # False = pod tekstem
+    overlay: bool = True  # True = zawsze ponad zawartością
 
 
 # === Pieczątki - enumy i konfiguracja ===

@@ -357,6 +357,7 @@ class WatermarkPage(BasePage):
         self._overlay_combo = StyledComboBox()
         self._overlay_combo.addItem("Pod tekstem", False)
         self._overlay_combo.addItem("Nad tekstem", True)
+        self._overlay_combo.setCurrentIndex(1)  # Domyślnie "Nad tekstem"
         overlay_row.addWidget(self._overlay_combo)
         overlay_row.addStretch()
         watermark_layout.addLayout(overlay_row)
