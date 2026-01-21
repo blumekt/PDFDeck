@@ -2,16 +2,18 @@
 DiffEngine - Porównywanie wersji dokumentów PDF.
 
 Funkcje:
-- Generowanie obrazu porównawczego (overlay)
+- Generowanie obrazu porównawczego z zaznaczeniem różnic
 - Wykrywanie różnic między stronami
-- Kolorowanie różnic (czerwony/niebieski)
+- Kolorowanie tylko rzeczywistych różnic
 """
 
 from dataclasses import dataclass
 from typing import List, Tuple, Optional
 from pathlib import Path
+import io
 
 import fitz  # PyMuPDF
+from PIL import Image, ImageDraw, ImageFilter
 
 
 @dataclass
@@ -28,7 +30,7 @@ class DiffEngine:
     Silnik porównywania dokumentów PDF.
 
     Generuje wizualne porównanie dwóch wersji dokumentu,
-    nakładając strony w różnych kolorach.
+    zaznaczając tylko rzeczywiste różnice.
     """
 
     def __init__(self):
@@ -71,20 +73,20 @@ class DiffEngine:
     def compare_page(
         self,
         page_index: int,
-        color_a: Tuple[int, int, int] = (255, 0, 0),  # Czerwony
-        color_b: Tuple[int, int, int] = (0, 0, 255),  # Niebieski
+        color_diff: Tuple[int, int, int] = (255, 0, 0),  # Czerwony dla różnic
         dpi: int = 150,
-        opacity: float = 0.5
+        threshold: int = 30,  # Próg różnicy kolorów (0-765)
     ) -> Optional[DiffResult]:
         """
         Porównuje pojedynczą stronę z obu dokumentów.
 
+        Pokazuje oryginalny dokument z zaznaczonymi różnicami (ramką i kolorem).
+
         Args:
             page_index: Indeks strony do porównania
-            color_a: Kolor dla dokumentu A (RGB)
-            color_b: Kolor dla dokumentu B (RGB)
+            color_diff: Kolor zaznaczenia różnic (RGB)
             dpi: Rozdzielczość renderowania
-            opacity: Przezroczystość nakładki (0.0-1.0)
+            threshold: Próg wykrywania różnic (suma różnic RGB)
 
         Returns:
             DiffResult z obrazem porównawczym lub None jeśli strona nie istnieje
@@ -103,147 +105,211 @@ class DiffEngine:
         pix_a = page_a.get_pixmap(matrix=mat, alpha=False)
         pix_b = page_b.get_pixmap(matrix=mat, alpha=False)
 
+        # Konwertuj do PIL Image
+        img_a = Image.frombytes("RGB", (pix_a.width, pix_a.height), pix_a.samples)
+        img_b = Image.frombytes("RGB", (pix_b.width, pix_b.height), pix_b.samples)
+
         # Dopasuj rozmiary (użyj większego)
-        width = max(pix_a.width, pix_b.width)
-        height = max(pix_a.height, pix_b.height)
+        width = max(img_a.width, img_b.width)
+        height = max(img_a.height, img_b.height)
 
-        # Utwórz nowy pixmap na wynik
-        result_pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, width, height), 1)
-        result_pix.clear_with(255)  # Białe tło
+        # Rozszerz obrazy do tego samego rozmiaru (białe tło)
+        if img_a.size != (width, height):
+            new_a = Image.new("RGB", (width, height), (255, 255, 255))
+            new_a.paste(img_a, (0, 0))
+            img_a = new_a
 
-        # Pobierz dane pikseli
-        samples_a = pix_a.samples
-        samples_b = pix_b.samples
-        result_samples = bytearray(result_pix.samples)
+        if img_b.size != (width, height):
+            new_b = Image.new("RGB", (width, height), (255, 255, 255))
+            new_b.paste(img_b, (0, 0))
+            img_b = new_b
 
-        # Oblicz różnice piksel po pikselu
+        # Znajdź różnice piksel po pikselu
+        pixels_a = img_a.load()
+        pixels_b = img_b.load()
+
+        # Utwórz maskę różnic
+        diff_mask = Image.new("L", (width, height), 0)
+        diff_pixels = diff_mask.load()
+
         diff_count = 0
-        total_pixels = 0
+        total_pixels = width * height
 
-        for y in range(min(pix_a.height, pix_b.height)):
-            for x in range(min(pix_a.width, pix_b.width)):
-                idx_a = (y * pix_a.width + x) * pix_a.n
-                idx_b = (y * pix_b.width + x) * pix_b.n
-                idx_r = (y * width + x) * 4  # RGBA
+        for y in range(height):
+            for x in range(width):
+                r_a, g_a, b_a = pixels_a[x, y]
+                r_b, g_b, b_b = pixels_b[x, y]
 
-                # Pobierz piksele
-                r_a, g_a, b_a = samples_a[idx_a], samples_a[idx_a + 1], samples_a[idx_a + 2]
-                r_b, g_b, b_b = samples_b[idx_b], samples_b[idx_b + 1], samples_b[idx_b + 2]
-
-                total_pixels += 1
-
-                # Sprawdź różnicę
+                # Oblicz różnicę
                 diff = abs(r_a - r_b) + abs(g_a - g_b) + abs(b_a - b_b)
 
-                if diff > 30:  # Próg różnicy
+                if diff > threshold:
                     diff_count += 1
-                    # Mieszaj kolory z zaznaczeniem różnicy
-                    result_samples[idx_r] = int(color_a[0] * opacity + color_b[0] * (1 - opacity))
-                    result_samples[idx_r + 1] = int(color_a[1] * opacity + color_b[1] * (1 - opacity))
-                    result_samples[idx_r + 2] = int(color_a[2] * opacity + color_b[2] * (1 - opacity))
-                    result_samples[idx_r + 3] = 255
-                else:
-                    # Bez różnicy - pokaż oryginał w skali szarości
-                    gray = int((r_a + g_a + b_a) / 3)
-                    result_samples[idx_r] = gray
-                    result_samples[idx_r + 1] = gray
-                    result_samples[idx_r + 2] = gray
-                    result_samples[idx_r + 3] = 255
+                    diff_pixels[x, y] = 255  # Różnica
 
-        # Utwórz nowy pixmap z wynikiem
-        result_pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, width, height), 1)
-        result_pix.set_origin(0, 0)
+        # Rozmyj maskę żeby połączyć bliskie różnice
+        diff_mask = diff_mask.filter(ImageFilter.MaxFilter(5))
+        diff_mask = diff_mask.filter(ImageFilter.GaussianBlur(3))
 
-        # Konwertuj do PNG
-        # Użyj prostszego podejścia - nałóż oba obrazy
-        diff_image = self._create_overlay_image(pix_a, pix_b, color_a, color_b, opacity)
+        # Stwórz obraz wynikowy - oryginał z zaznaczonymi różnicami
+        result_img = img_b.copy()
+        draw = ImageDraw.Draw(result_img)
+
+        # Znajdź regiony różnic (bounding boxes)
+        diff_regions = self._find_diff_regions(diff_mask)
+
+        # Narysuj ramki wokół różnic
+        for region in diff_regions:
+            x1, y1, x2, y2 = region
+            # Ramka
+            draw.rectangle([x1 - 2, y1 - 2, x2 + 2, y2 + 2], outline=color_diff, width=3)
+
+        # Nałóż półprzezroczystą warstwę na różnice
+        if diff_regions:
+            overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            overlay_draw = ImageDraw.Draw(overlay)
+
+            for region in diff_regions:
+                x1, y1, x2, y2 = region
+                # Półprzezroczyste wypełnienie
+                overlay_draw.rectangle(
+                    [x1, y1, x2, y2],
+                    fill=(color_diff[0], color_diff[1], color_diff[2], 80)
+                )
+
+            # Połącz z wynikiem
+            result_img = result_img.convert("RGBA")
+            result_img = Image.alpha_composite(result_img, overlay)
+            result_img = result_img.convert("RGB")
+
+        # Konwertuj do PNG bytes
+        buffer = io.BytesIO()
+        result_img.save(buffer, format="PNG")
+        png_bytes = buffer.getvalue()
 
         similarity = 100.0 * (1 - diff_count / max(total_pixels, 1))
 
         return DiffResult(
             page_index=page_index,
-            has_differences=diff_count > 0,
-            diff_image=diff_image,
+            has_differences=len(diff_regions) > 0,
+            diff_image=png_bytes,
             similarity_percent=similarity
         )
 
-    def _create_overlay_image(
+    def _find_diff_regions(
         self,
-        pix_a: fitz.Pixmap,
-        pix_b: fitz.Pixmap,
-        color_a: Tuple[int, int, int],
-        color_b: Tuple[int, int, int],
-        opacity: float
-    ) -> bytes:
+        diff_mask: Image.Image,
+        min_size: int = 10
+    ) -> List[Tuple[int, int, int, int]]:
         """
-        Tworzy obraz nakładkowy z dwóch pixmap.
+        Znajduje regiony różnic w masce.
 
-        Używa prostego podejścia - renderuje różnice kolorami.
-        """
-        # Użyj większego rozmiaru
-        width = max(pix_a.width, pix_b.width)
-        height = max(pix_a.height, pix_b.height)
-
-        # Utwórz nowy dokument PDF jako bufor
-        doc = fitz.open()
-        page = doc.new_page(width=width, height=height)
-
-        # Wstaw oba obrazy z przezroczystością
-        rect = fitz.Rect(0, 0, pix_a.width, pix_a.height)
-
-        # Wstaw pierwszy obraz (zabarwiony na kolor A)
-        tinted_a = self._tint_pixmap(pix_a, color_a, 0.3)
-        page.insert_image(rect, pixmap=tinted_a)
-
-        # Wstaw drugi obraz (zabarwiony na kolor B) z przezroczystością
-        rect_b = fitz.Rect(0, 0, pix_b.width, pix_b.height)
-        tinted_b = self._tint_pixmap(pix_b, color_b, 0.3)
-
-        # Renderuj stronę do PNG
-        result_pix = page.get_pixmap(dpi=150)
-        png_bytes = result_pix.tobytes("png")
-
-        doc.close()
-
-        return png_bytes
-
-    def _tint_pixmap(
-        self,
-        pix: fitz.Pixmap,
-        color: Tuple[int, int, int],
-        intensity: float
-    ) -> fitz.Pixmap:
-        """
-        Zabarwia pixmap na podany kolor.
+        Używa prostego algorytmu flood-fill do znalezienia połączonych obszarów.
 
         Args:
-            pix: Pixmap do zabarwienia
-            color: Kolor RGB
-            intensity: Intensywność zabarwienia (0.0-1.0)
+            diff_mask: Maska różnic (biały = różnica)
+            min_size: Minimalny rozmiar regionu do uwzględnienia
 
         Returns:
-            Nowy zabarwiony Pixmap
+            Lista bounding boxów (x1, y1, x2, y2)
         """
-        # Utwórz kopię
-        tinted = fitz.Pixmap(pix)
-        samples = bytearray(tinted.samples)
+        width, height = diff_mask.size
+        pixels = diff_mask.load()
+        visited = [[False] * width for _ in range(height)]
+        regions = []
 
-        for i in range(0, len(samples), pix.n):
-            r, g, b = samples[i], samples[i + 1], samples[i + 2]
+        def flood_fill(start_x: int, start_y: int) -> Tuple[int, int, int, int]:
+            """Znajduje bounding box połączonego regionu."""
+            stack = [(start_x, start_y)]
+            min_x, min_y = start_x, start_y
+            max_x, max_y = start_x, start_y
 
-            # Mieszaj z kolorem
-            samples[i] = int(r * (1 - intensity) + color[0] * intensity)
-            samples[i + 1] = int(g * (1 - intensity) + color[1] * intensity)
-            samples[i + 2] = int(b * (1 - intensity) + color[2] * intensity)
+            while stack:
+                x, y = stack.pop()
 
-        # PyMuPDF nie pozwala bezpośrednio modyfikować samples,
-        # więc zwracamy oryginalny pixmap (uproszczone)
-        return pix
+                if x < 0 or x >= width or y < 0 or y >= height:
+                    continue
+                if visited[y][x]:
+                    continue
+                if pixels[x, y] < 128:  # Próg dla maski
+                    continue
+
+                visited[y][x] = True
+                min_x = min(min_x, x)
+                min_y = min(min_y, y)
+                max_x = max(max_x, x)
+                max_y = max(max_y, y)
+
+                # Dodaj sąsiadów (8-connectivity)
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        if dx != 0 or dy != 0:
+                            stack.append((x + dx, y + dy))
+
+            return (min_x, min_y, max_x, max_y)
+
+        # Znajdź wszystkie regiony
+        for y in range(height):
+            for x in range(width):
+                if not visited[y][x] and pixels[x, y] >= 128:
+                    region = flood_fill(x, y)
+                    # Filtruj małe regiony
+                    region_width = region[2] - region[0]
+                    region_height = region[3] - region[1]
+                    if region_width >= min_size and region_height >= min_size:
+                        regions.append(region)
+
+        # Połącz nakładające się lub bliskie regiony
+        regions = self._merge_close_regions(regions, margin=20)
+
+        return regions
+
+    def _merge_close_regions(
+        self,
+        regions: List[Tuple[int, int, int, int]],
+        margin: int = 20
+    ) -> List[Tuple[int, int, int, int]]:
+        """
+        Łączy regiony które są blisko siebie.
+
+        Args:
+            regions: Lista bounding boxów
+            margin: Margines do łączenia
+
+        Returns:
+            Lista połączonych regionów
+        """
+        if not regions:
+            return []
+
+        # Sortuj po pozycji
+        regions = sorted(regions, key=lambda r: (r[1], r[0]))
+
+        merged = []
+        current = list(regions[0])
+
+        for region in regions[1:]:
+            # Sprawdź czy regiony się nakładają lub są blisko
+            if (region[0] <= current[2] + margin and
+                region[2] >= current[0] - margin and
+                region[1] <= current[3] + margin and
+                region[3] >= current[1] - margin):
+                # Połącz
+                current[0] = min(current[0], region[0])
+                current[1] = min(current[1], region[1])
+                current[2] = max(current[2], region[2])
+                current[3] = max(current[3], region[3])
+            else:
+                merged.append(tuple(current))
+                current = list(region)
+
+        merged.append(tuple(current))
+
+        return merged
 
     def compare_all_pages(
         self,
-        color_a: Tuple[int, int, int] = (255, 0, 0),
-        color_b: Tuple[int, int, int] = (0, 0, 255),
+        color_diff: Tuple[int, int, int] = (255, 0, 0),
         dpi: int = 150
     ) -> List[DiffResult]:
         """
@@ -259,7 +325,7 @@ class DiffEngine:
         max_pages = max(len(self._doc_a), len(self._doc_b))
 
         for i in range(max_pages):
-            result = self.compare_page(i, color_a, color_b, dpi)
+            result = self.compare_page(i, color_diff, dpi)
             if result:
                 results.append(result)
 
