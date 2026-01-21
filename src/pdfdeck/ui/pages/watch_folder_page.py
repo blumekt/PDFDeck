@@ -53,8 +53,21 @@ class WatchFolderPage(BasePage):
         """Tworzy interfejs użytkownika."""
         # Użyj _main_layout z BasePage zamiast tworzyć nowy
         layout = self._main_layout
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(16)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Scroll area dla całej zawartości
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet(self._scroll_style())
+
+        # Kontener wewnętrzny
+        content = QWidget()
+        content.setStyleSheet("background-color: transparent;")
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(30, 30, 30, 30)
+        content_layout.setSpacing(20)
 
         # Nagłówek
         header = QLabel("Watch Folder - Automatyczne przetwarzanie")
@@ -62,41 +75,36 @@ class WatchFolderPage(BasePage):
             font-size: 24px;
             font-weight: bold;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         """)
-        layout.addWidget(header)
+        content_layout.addWidget(header)
 
         desc = QLabel(
             "Automatycznie przetwarzaj pliki PDF pojawiające się w folderze.\n"
             "Przetworzone dokumenty są zapisywane w folderze wyjściowym."
         )
-        desc.setStyleSheet("color: #8892a0; font-size: 13px;")
-        layout.addWidget(desc)
+        desc.setStyleSheet("color: #8892a0; font-size: 13px; margin-bottom: 10px;")
+        content_layout.addWidget(desc)
 
         # === Konfiguracja ===
         config_group = QGroupBox("Konfiguracja")
         config_group.setStyleSheet(self._group_style())
         config_layout = QVBoxLayout(config_group)
+        config_layout.setSpacing(12)
+        config_layout.setContentsMargins(15, 20, 15, 15)
 
         # Folder wejściowy
         input_row = QHBoxLayout()
+        input_row.setSpacing(10)
         input_label = QLabel("Folder wejściowy:")
         input_label.setStyleSheet("color: #8892a0;")
-        input_label.setFixedWidth(120)
+        input_label.setFixedWidth(130)
         input_row.addWidget(input_label)
 
         self._input_dir_edit = QLineEdit()
         self._input_dir_edit.setReadOnly(True)
         self._input_dir_edit.setPlaceholderText("Wybierz folder do monitorowania...")
-        self._input_dir_edit.setStyleSheet("""
-            QLineEdit {
-                background-color: #0f1629;
-                border: 1px solid #2d3a50;
-                border-radius: 4px;
-                padding: 8px;
-                color: #ffffff;
-            }
-        """)
+        self._input_dir_edit.setStyleSheet(self._input_style())
         input_row.addWidget(self._input_dir_edit)
 
         input_btn = StyledButton("Przeglądaj", "secondary")
@@ -107,15 +115,16 @@ class WatchFolderPage(BasePage):
 
         # Folder wyjściowy
         output_row = QHBoxLayout()
+        output_row.setSpacing(10)
         output_label = QLabel("Folder wyjściowy:")
         output_label.setStyleSheet("color: #8892a0;")
-        output_label.setFixedWidth(120)
+        output_label.setFixedWidth(130)
         output_row.addWidget(output_label)
 
         self._output_dir_edit = QLineEdit()
         self._output_dir_edit.setReadOnly(True)
         self._output_dir_edit.setPlaceholderText("Wybierz folder wyjściowy...")
-        self._output_dir_edit.setStyleSheet(self._input_dir_edit.styleSheet())
+        self._output_dir_edit.setStyleSheet(self._input_style())
         output_row.addWidget(self._output_dir_edit)
 
         output_btn = StyledButton("Przeglądaj", "secondary")
@@ -126,9 +135,10 @@ class WatchFolderPage(BasePage):
 
         # Profil przetwarzania
         profile_row = QHBoxLayout()
+        profile_row.setSpacing(10)
         profile_label = QLabel("Profil:")
         profile_label.setStyleSheet("color: #8892a0;")
-        profile_label.setFixedWidth(120)
+        profile_label.setFixedWidth(130)
         profile_row.addWidget(profile_label)
 
         self._profile_combo = QComboBox()
@@ -136,10 +146,13 @@ class WatchFolderPage(BasePage):
             QComboBox {
                 background-color: #0f1629;
                 border: 1px solid #2d3a50;
-                border-radius: 4px;
-                padding: 8px;
+                border-radius: 6px;
+                padding: 8px 12px;
                 color: #ffffff;
-                min-width: 200px;
+                min-width: 250px;
+            }
+            QComboBox:focus {
+                border-color: #e0a800;
             }
             QComboBox::drop-down {
                 border: none;
@@ -166,10 +179,11 @@ class WatchFolderPage(BasePage):
         profile_row.addStretch()
         config_layout.addLayout(profile_row)
 
-        layout.addWidget(config_group)
+        content_layout.addWidget(config_group)
 
         # === Kontrola ===
         control_layout = QHBoxLayout()
+        control_layout.setSpacing(15)
 
         self._start_btn = StyledButton("▶ Uruchom monitorowanie", "primary")
         self._start_btn.clicked.connect(self._start_watching)
@@ -182,17 +196,19 @@ class WatchFolderPage(BasePage):
 
         # Status
         self._status_label = QLabel("Status: zatrzymany")
-        self._status_label.setStyleSheet("color: #8892a0; margin-left: 20px;")
+        self._status_label.setStyleSheet("color: #8892a0; margin-left: 20px; font-size: 13px;")
         control_layout.addWidget(self._status_label)
 
         control_layout.addStretch()
 
-        layout.addLayout(control_layout)
+        content_layout.addLayout(control_layout)
 
         # === Log ===
         log_group = QGroupBox("Log operacji")
         log_group.setStyleSheet(self._group_style())
         log_layout = QVBoxLayout(log_group)
+        log_layout.setSpacing(10)
+        log_layout.setContentsMargins(15, 20, 15, 15)
 
         # Tabela logów
         self._log_table = QTableWidget()
@@ -229,7 +245,10 @@ class WatchFolderPage(BasePage):
 
         log_layout.addLayout(log_buttons)
 
-        layout.addWidget(log_group, 1)
+        content_layout.addWidget(log_group, 1)
+
+        scroll.setWidget(content)
+        layout.addWidget(scroll)
 
     def _group_style(self) -> str:
         """Zwraca styl dla QGroupBox."""
@@ -237,16 +256,56 @@ class WatchFolderPage(BasePage):
             QGroupBox {
                 font-size: 14px;
                 font-weight: bold;
-                color: #ffffff;
+                color: #e0a800;
                 border: 1px solid #2d3a50;
                 border-radius: 8px;
-                margin-top: 10px;
-                padding-top: 15px;
+                margin-top: 12px;
+                padding-top: 18px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 15px;
-                padding: 0 5px;
+                padding: 0 8px;
+            }
+        """
+
+    def _input_style(self) -> str:
+        """Zwraca styl dla pól input."""
+        return """
+            QLineEdit {
+                background-color: #0f1629;
+                border: 1px solid #2d3a50;
+                border-radius: 6px;
+                padding: 8px 12px;
+                color: #ffffff;
+            }
+            QLineEdit:focus {
+                border-color: #e0a800;
+            }
+        """
+
+    def _scroll_style(self) -> str:
+        """Zwraca styl dla scroll area."""
+        return """
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #0f1629;
+                width: 10px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #2d3a50;
+                border-radius: 5px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #e0a800;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
             }
         """
 

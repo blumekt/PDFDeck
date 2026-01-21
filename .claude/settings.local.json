@@ -29,7 +29,8 @@
       "Bash(python:*)",
       "Bash(exit 0)",
       "Bash(ruff check:*)",
-      "Bash(mypy:*)"
+      "Bash(mypy:*)",
+      "Bash(gh api:*)"
     ]
   }
 }
