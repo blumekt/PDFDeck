@@ -49,12 +49,14 @@ class OCRWorker(QThread):
         pages: List[int],
         config: OCRConfig,
         api_key: Optional[str] = None,
+        use_tesseract: bool = False,
     ):
         super().__init__()
         self.doc = doc
         self.pages = pages
         self.config = config
         self.api_key = api_key
+        self.use_tesseract = use_tesseract
         self._cancelled = False
 
     def run(self):
@@ -68,11 +70,18 @@ class OCRWorker(QThread):
 
                 self.progress.emit(i, len(self.pages))
 
-                result = engine.recognize_pdf_page(
-                    self.doc,
-                    page_idx,
-                    self.config,
-                )
+                if self.use_tesseract:
+                    result = engine.recognize_pdf_page_tesseract(
+                        self.doc,
+                        page_idx,
+                        self.config,
+                    )
+                else:
+                    result = engine.recognize_pdf_page(
+                        self.doc,
+                        page_idx,
+                        self.config,
+                    )
                 results.append(result)
                 self.page_done.emit(page_idx, result)
 
@@ -80,7 +89,7 @@ class OCRWorker(QThread):
             self.finished.emit(results)
 
         except Exception as e:
-            self.error.emit(st(e))
+            self.error.emit(str(e))
 
     def cancel(self):
         self._cancelled = True
@@ -137,6 +146,8 @@ class OCRPage(BasePage):
 
         # === Lewa strona - Konfiguracja ===
         left_widget = QWidget()
+        left_widget.setMinimumWidth(250)
+        left_widget.setMaximumWidth(300)
         left_layout = QVBoxLayout(left_widget)
         left_layout.setContentsMargins(0, 0, 10, 0)
 
@@ -166,14 +177,14 @@ class OCRPage(BasePage):
         # Button group dla wzajemnego wykluczania
         self._method_button_group = QButtonGroup()
 
-        # AI OCR (Online)
-        ai_ocr_widget = QWidget()
-        ai_ocr_layout = QVBoxLayout(ai_ocr_widget)
-        ai_ocr_layout.setContentsMargins(0, 0, 0, 0)
-        ai_ocr_layout.setSpacing(4)
+        # Ekstrakcja lokalna (Zalecane)
+        local_widget = QWidget()
+        local_layout = QVBoxLayout(local_widget)
+        local_layout.setContentsMargins(0, 0, 0, 0)
+        local_layout.setSpacing(4)
 
-        self._ai_ocr_radio = QRadioButton("AI OCR (Online)")
-        self._ai_ocr_radio.setStyleSheet("""
+        self._tesseract_radio = QRadioButton("Ekstrakcja tekstu (Zalecane)")
+        self._tesseract_radio.setStyleSheet("""
             QRadioButton {
                 color: #ffffff;
                 font-size: 13px;
@@ -194,10 +205,33 @@ class OCRPage(BasePage):
                 border-color: #e0a800;
             }
         """)
+        self._tesseract_radio.setChecked(True)  # Domyślnie zaznaczone
+        self._method_button_group.addButton(self._tesseract_radio, 1)
+        local_layout.addWidget(self._tesseract_radio)
+
+        local_desc = QLabel("🔒 100% prywatne - działa lokalnie, dla PDF z tekstem")
+        local_desc.setStyleSheet("""
+            color: #27ae60;
+            font-size: 11px;
+            padding-left: 26px;
+        """)
+        local_desc.setWordWrap(True)
+        local_layout.addWidget(local_desc)
+
+        method_layout.addWidget(local_widget)
+
+        # AI OCR (Online) - dla skanów
+        ai_ocr_widget = QWidget()
+        ai_ocr_layout = QVBoxLayout(ai_ocr_widget)
+        ai_ocr_layout.setContentsMargins(0, 0, 0, 0)
+        ai_ocr_layout.setSpacing(4)
+
+        self._ai_ocr_radio = QRadioButton("AI OCR (dla skanów)")
+        self._ai_ocr_radio.setStyleSheet(self._tesseract_radio.styleSheet())
         self._method_button_group.addButton(self._ai_ocr_radio, 0)
         ai_ocr_layout.addWidget(self._ai_ocr_radio)
 
-        ai_ocr_desc = QLabel("⚠️  Wysyła obraz na zewnętrzny serwer - nie dla wrażliwych danych")
+        ai_ocr_desc = QLabel("⚠️  Wysyła obraz na serwer - dla skanów bez warstwy tekstu")
         ai_ocr_desc.setStyleSheet("""
             color: #f39c12;
             font-size: 11px;
@@ -207,29 +241,6 @@ class OCRPage(BasePage):
         ai_ocr_layout.addWidget(ai_ocr_desc)
 
         method_layout.addWidget(ai_ocr_widget)
-
-        # Tesseract (Zalecane)
-        tesseract_widget = QWidget()
-        tesseract_layout = QVBoxLayout(tesseract_widget)
-        tesseract_layout.setContentsMargins(0, 0, 0, 0)
-        tesseract_layout.setSpacing(4)
-
-        self._tesseract_radio = QRadioButton("Tesseract (Zalecane)")
-        self._tesseract_radio.setStyleSheet(self._ai_ocr_radio.styleSheet())
-        self._tesseract_radio.setChecked(True)  # Domyślnie zaznaczone
-        self._method_button_group.addButton(self._tesseract_radio, 1)
-        tesseract_layout.addWidget(self._tesseract_radio)
-
-        tesseract_desc = QLabel("🔒 100% prywatne - działa lokalnie, offline")
-        tesseract_desc.setStyleSheet("""
-            color: #27ae60;
-            font-size: 11px;
-            padding-left: 26px;
-        """)
-        tesseract_desc.setWordWrap(True)
-        tesseract_layout.addWidget(tesseract_desc)
-
-        method_layout.addWidget(tesseract_widget)
 
         left_layout.addWidget(method_group)
 
@@ -259,15 +270,15 @@ class OCRPage(BasePage):
         lang_label.setStyleSheet("color: #8892a0;")
         lang_row.addWidget(lang_label)
 
-        self._language_combo = QComboBox()
-        self._language_combo.setStyleSheet("""
+        combo_style = """
             QComboBox {
                 background-color: #0f1629;
                 border: 1px solid #2d3a50;
                 border-radius: 4px;
-                padding: 8px;
+                padding: 10px 12px;
                 color: #ffffff;
-                min-width: 150px;
+                font-size: 13px;
+                min-height: 20px;
             }
             QComboBox::drop-down {
                 border: none;
@@ -278,8 +289,16 @@ class OCRPage(BasePage):
                 border: 1px solid #2d3a50;
                 selection-background-color: #e0a800;
                 selection-color: #1a1a2e;
+                padding: 4px;
             }
-        """)
+            QComboBox QAbstractItemView::item {
+                padding: 8px;
+                min-height: 24px;
+            }
+        """
+
+        self._language_combo = QComboBox()
+        self._language_combo.setStyleSheet(combo_style)
 
         # Dodaj języki
         languages = OCREngine.get_supported_languages()
@@ -291,8 +310,7 @@ class OCRPage(BasePage):
         if pol_index >= 0:
             self._language_combo.setCurrentIndex(pol_index)
 
-        lang_row.addWidget(self._language_combo)
-        lang_row.addStretch()
+        lang_row.addWidget(self._language_combo, 1)  # stretch factor 1 - rozciąga się
         config_layout.addLayout(lang_row)
 
         # Engine
@@ -302,52 +320,43 @@ class OCRPage(BasePage):
         engine_row.addWidget(engine_label)
 
         self._engine_combo = QComboBox()
-        self._engine_combo.setStyleSheet(self._language_combo.styleSheet())
+        self._engine_combo.setStyleSheet(combo_style)
         self._engine_combo.addItem("Engine 1 (szybszy)", 1)
         self._engine_combo.addItem("Engine 2 (dokładniejszy)", 2)
         self._engine_combo.setCurrentIndex(1)  # Engine 2 domyślnie
-        engine_row.addWidget(self._engine_combo)
-        engine_row.addStretch()
+        engine_row.addWidget(self._engine_combo, 1)  # stretch factor 1 - rozciąga się
         config_layout.addLayout(engine_row)
 
         # Opcje
+        checkbox_style = """
+            QCheckBox {
+                color: #ffffff;
+                spacing: 8px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+                border-radius: 4px;
+                border: 2px solid #2d3a50;
+                background-color: #0f1629;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #e0a800;
+                border-color: #e0a800;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #e0a800;
+            }
+        """
+
         self._table_check = QCheckBox(t("ocr_table_mode", "Tryb tabelaryczny"))
-        self._table_check.setStyleSheet("color: #ffffff;")
+        self._table_check.setStyleSheet(checkbox_style)
         config_layout.addWidget(self._table_check)
 
         self._scale_check = QCheckBox(t("ocr_scale", "Skaluj dla lepszej dokładności"))
-        self._scale_check.setStyleSheet("color: #ffffff;")
+        self._scale_check.setStyleSheet(checkbox_style)
         self._scale_check.setChecked(True)
         config_layout.addWidget(self._scale_check)
-
-        # API Key
-        api_row = QHBoxLayout()
-        api_label = QLabel(t("ocr_api_key", "API Key (opcjonalny):"))
-        api_label.setStyleSheet("color: #8892a0;")
-        api_row.addWidget(api_label)
-
-        from PyQt6.QtWidgets import QLineEdit
-        self._api_key_input = QLineEdit()
-        self._api_key_input.setPlaceholderText("helloworld (demo)")
-        self._api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self._api_key_input.setStyleSheet("""
-            QLineEdit {
-                background-color: #0f1629;
-                border: 1px solid #2d3a50;
-                border-radius: 4px;
-                padding: 8px;
-                color: #ffffff;
-            }
-        """)
-
-        # Załaduj klucz z ustawień
-        from pdfdeck.ui.pages.settings_page import SettingsPage
-        saved_key = SettingsPage.get_ocr_api_key()
-        if saved_key and saved_key != "helloworld":
-            self._api_key_input.setText(saved_key)
-
-        api_row.addWidget(self._api_key_input)
-        config_layout.addLayout(api_row)
 
         left_layout.addWidget(config_group)
 
@@ -357,13 +366,13 @@ class OCRPage(BasePage):
         pages_layout = QVBoxLayout(pages_group)
 
         self._all_pages_radio = QCheckBox(t("ocr_all_pages", "Wszystkie strony"))
-        self._all_pages_radio.setStyleSheet("color: #ffffff;")
+        self._all_pages_radio.setStyleSheet(checkbox_style)
         self._all_pages_radio.setChecked(True)
         pages_layout.addWidget(self._all_pages_radio)
 
         page_range_row = QHBoxLayout()
         self._range_radio = QCheckBox(t("ocr_page_range", "Zakres:"))
-        self._range_radio.setStyleSheet("color: #ffffff;")
+        self._range_radio.setStyleSheet(checkbox_style)
         page_range_row.addWidget(self._range_radio)
 
         self._from_spin = QSpinBox()
@@ -498,10 +507,35 @@ class OCRPage(BasePage):
 
         splitter.addWidget(right_widget)
 
-        # Ustaw proporcje splittera
-        splitter.setSizes([400, 600])
+        # Ustaw proporcje splittera (lewa strona węższa, prawa szersza na wyniki)
+        splitter.setSizes([280, 720])
 
-        layout.addWidget(splitter)
+        # Zawin cały splitter w scroll area
+        main_scroll = QScrollArea()
+        main_scroll.setWidget(splitter)
+        main_scroll.setWidgetResizable(True)
+        main_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        main_scroll.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #0f1629;
+                width: 10px;
+                border-radius: 5px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #2d3a50;
+                border-radius: 5px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: #e0a800;
+            }
+        """)
+
+        layout.addWidget(main_scroll)
 
     def on_document_loaded(self) -> None:
         """Wywoływane po załadowaniu dokumentu."""
@@ -546,7 +580,15 @@ class OCRPage(BasePage):
             return
 
         config = self._get_config()
-        api_key = self._api_key_input.text().strip() or None
+
+        # Sprawdź wybraną metodę OCR
+        use_tesseract = self._tesseract_radio.isChecked()
+
+        # Pobierz API key z ustawień (tylko dla AI OCR)
+        api_key = None
+        if not use_tesseract:
+            from pdfdeck.ui.pages.settings_page import SettingsPage
+            api_key = SettingsPage.get_ocr_api_key()
 
         # Reset wyników
         self._ocr_results = []
@@ -568,6 +610,7 @@ class OCRPage(BasePage):
             pages,
             config,
             api_key,
+            use_tesseract=use_tesseract,
         )
         self._worker.progress.connect(self._on_progress)
         self._worker.page_done.connect(self._on_page_done)

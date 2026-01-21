@@ -229,7 +229,7 @@ class OCREngine:
         dpi: int = 300,
     ) -> OCRResult:
         """
-        Rozpoznaje tekst ze strony PDF.
+        Rozpoznaje tekst ze strony PDF (używając OCR.space API).
 
         Args:
             doc: Dokument PyMuPDF
@@ -251,6 +251,172 @@ class OCREngine:
         result.page_index = page_index
 
         return result
+
+    def recognize_pdf_page_tesseract(
+        self,
+        doc: pymupdf.Document,
+        page_index: int,
+        config: Optional[OCRConfig] = None,
+        dpi: int = 300,
+    ) -> OCRResult:
+        """
+        Wyciąga tekst ze strony PDF lokalnie (bez wysyłania na serwer).
+
+        Działa dla PDF-ów które mają warstwę tekstową (nie dla czystych skanów/obrazów).
+        Dla skanów bez warstwy tekstowej użyj metody AI OCR (Online).
+
+        Args:
+            doc: Dokument PyMuPDF
+            page_index: Indeks strony
+            config: Konfiguracja OCR
+            dpi: Rozdzielczość (nieużywana)
+
+        Returns:
+            OCRResult z wyciągniętym tekstem
+        """
+        config = config or OCRConfig()
+
+        try:
+            page = doc[page_index]
+
+            # Tryb tabelaryczny - użyj find_tables() z PyMuPDF
+            if config.is_table:
+                text = self._extract_tables_as_text(page)
+            else:
+                # Standardowa ekstrakcja tekstu
+                text = page.get_text("text")
+
+            # Wyciągnij słowa z pozycjami
+            words = []
+            try:
+                word_list = page.get_text("words")
+                for w in word_list:
+                    # w = (x0, y0, x1, y1, "word", block_no, line_no, word_no)
+                    words.append({
+                        "text": w[4],
+                        "left": w[0],
+                        "top": w[1],
+                        "width": w[2] - w[0],
+                        "height": w[3] - w[1],
+                    })
+            except Exception:
+                pass
+
+            lines = [line.strip() for line in text.split('\n') if line.strip()]
+
+            # Sprawdź czy strona ma jakikolwiek tekst
+            if not text.strip():
+                return OCRResult(
+                    page_index=page_index,
+                    text="",
+                    confidence=0.0,
+                    words=[],
+                    lines=[],
+                    error="Brak tekstu na stronie. Strona może być skanem - użyj AI OCR (Online).",
+                )
+
+            return OCRResult(
+                page_index=page_index,
+                text=text.strip(),
+                confidence=1.0,  # Tekst z PDF jest pewny
+                words=words,
+                lines=lines,
+            )
+
+        except Exception as e:
+            return OCRResult(
+                page_index=page_index,
+                text="",
+                confidence=0.0,
+                words=[],
+                lines=[],
+                error=str(e),
+            )
+
+    def _extract_tables_as_text(self, page) -> str:
+        """
+        Wyciąga tabele ze strony i formatuje je jako tekst.
+
+        Args:
+            page: Strona PyMuPDF
+
+        Returns:
+            Tekst z tabelami sformatowanymi w kolumnach
+        """
+        result_lines = []
+
+        # Znajdź tabele na stronie
+        tables = page.find_tables()
+
+        if tables and tables.tables:
+            for table_idx, table in enumerate(tables.tables):
+                if table_idx > 0:
+                    result_lines.append("")  # Separator między tabelami
+
+                # Pobierz dane tabeli
+                table_data = table.extract()
+
+                if not table_data:
+                    continue
+
+                # Filtruj puste kolumny (kolumny gdzie wszystkie komórki są puste)
+                num_cols = max(len(row) for row in table_data) if table_data else 0
+                non_empty_cols = []
+                for col_idx in range(num_cols):
+                    has_content = False
+                    for row in table_data:
+                        if col_idx < len(row) and row[col_idx] and str(row[col_idx]).strip():
+                            has_content = True
+                            break
+                    if has_content:
+                        non_empty_cols.append(col_idx)
+
+                # Przefiltruj dane - zostaw tylko niepuste kolumny
+                filtered_data = []
+                for row in table_data:
+                    filtered_row = []
+                    for col_idx in non_empty_cols:
+                        if col_idx < len(row):
+                            filtered_row.append(row[col_idx])
+                        else:
+                            filtered_row.append("")
+                    filtered_data.append(filtered_row)
+
+                if not filtered_data:
+                    continue
+
+                # Oblicz maksymalne szerokości kolumn
+                col_widths = []
+                for row in filtered_data:
+                    for col_idx, cell in enumerate(row):
+                        cell_text = str(cell) if cell else ""
+                        if col_idx >= len(col_widths):
+                            col_widths.append(len(cell_text))
+                        else:
+                            col_widths[col_idx] = max(col_widths[col_idx], len(cell_text))
+
+                # Formatuj wiersze tabeli
+                for row_idx, row in enumerate(filtered_data):
+                    formatted_cells = []
+                    for col_idx, cell in enumerate(row):
+                        cell_text = str(cell) if cell else ""
+                        # Wyrównaj do szerokości kolumny
+                        if col_idx < len(col_widths):
+                            formatted_cells.append(cell_text.ljust(col_widths[col_idx]))
+                        else:
+                            formatted_cells.append(cell_text)
+                    result_lines.append(" | ".join(formatted_cells))
+
+                    # Dodaj separator po nagłówku (pierwszy wiersz)
+                    if row_idx == 0:
+                        separator = "-+-".join("-" * w for w in col_widths)
+                        result_lines.append(separator)
+
+        # Jeśli nie znaleziono tabel, użyj standardowej ekstrakcji
+        if not result_lines:
+            return page.get_text("text")
+
+        return "\n".join(result_lines)
 
     async def recognize_pdf_page_async(
         self,
