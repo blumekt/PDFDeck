@@ -51,7 +51,7 @@ class HeaderFooterConfig:
 
     # Margines od krawędzi (w punktach)
     margin_top: float = 36  # 0.5 inch
-    margin_bottom: float = 36
+    margin_bottom: float = 36  # Margines dla stopek (zwykły)
     margin_left: float = 36
     margin_right: float = 36
 
@@ -169,7 +169,7 @@ class HeaderFooterEngine:
                     )
 
                 # === Stopka ===
-                y_footer = rect.height - config.margin_bottom
+                y_footer = rect.height - config.margin_bottom + config.font_size
 
                 if footer_left:
                     text = self._expand_template(footer_left, page_num, total_pages)
