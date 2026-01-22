@@ -81,3 +81,6 @@ release/*.yml
 # Windows reserved names
 nul
 NUL
+
+# Claude Code local settings
+.claude/settings.local.json
