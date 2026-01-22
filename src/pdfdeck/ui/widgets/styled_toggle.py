@@ -5,7 +5,7 @@ StyledToggle - Toggle switch w stylu MediaDown.
 """
 
 from PyQt6.QtWidgets import QCheckBox, QWidget, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QRect
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtProperty, QPropertyAnimation, QEasingCurve, QRect
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
 
 
@@ -53,14 +53,14 @@ class StyledToggle(QCheckBox):
         self._animation.setEndValue(target)
         self._animation.start()
 
-    @property
-    def handle_position(self) -> float:
+    def get_handle_position(self) -> float:
         return self._handle_position
 
-    @handle_position.setter
-    def handle_position(self, value: float) -> None:
+    def set_handle_position(self, value: float) -> None:
         self._handle_position = value
         self.update()
+
+    handle_position = pyqtProperty(float, get_handle_position, set_handle_position)
 
     def paintEvent(self, event) -> None:
         """Rysuje toggle switch."""

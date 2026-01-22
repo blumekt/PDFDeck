@@ -30,7 +30,8 @@
       "Bash(exit 0)",
       "Bash(ruff check:*)",
       "Bash(mypy:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(start pythonw -m pdfdeck)"
     ]
   }
 }

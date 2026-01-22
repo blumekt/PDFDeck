@@ -369,6 +369,10 @@ class MainWindow(QMainWindow):
     def _check_for_updates(self) -> None:
         """Sprawdza aktualizacje przy starcie."""
         try:
+            # Sprawdź czy auto-update jest włączone
+            if not self._is_auto_update_enabled():
+                return
+
             from pdfdeck.core.updater import UpdateManager, UpdateChannel
 
             # Wczytaj kanał z ustawień
@@ -382,6 +386,20 @@ class MainWindow(QMainWindow):
         except Exception as e:
             # Ciche niepowodzenie - nie blokuj startu aplikacji
             print(f"Błąd sprawdzania aktualizacji: {e}")
+
+    def _is_auto_update_enabled(self) -> bool:
+        """Sprawdza czy auto-update jest włączone."""
+        import json
+
+        config_path = Path.home() / ".pdfdeck" / "settings.json"
+        try:
+            if config_path.exists():
+                with open(config_path, "r", encoding="utf-8") as f:
+                    settings = json.load(f)
+                    return settings.get("auto_update", True)
+        except Exception:
+            pass
+        return True  # Domyślnie włączone
 
     def _load_update_channel(self) -> "UpdateChannel":
         """Wczytuje kanał aktualizacji z ustawień."""

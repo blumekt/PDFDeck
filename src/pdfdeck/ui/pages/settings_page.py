@@ -20,6 +20,7 @@ from PyQt6.QtCore import Qt
 from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.styled_button import StyledButton
 from pdfdeck.ui.widgets.styled_combo import StyledComboBox
+from pdfdeck.ui.widgets.styled_toggle import LabeledToggle
 from pdfdeck.utils.i18n import get_i18n, t
 
 if TYPE_CHECKING:
@@ -150,7 +151,7 @@ class SettingsPage(BasePage):
         ocr_key_row.addWidget(self._ocr_key_input)
 
         save_btn = StyledButton("Zapisz", "primary")
-        save_btn.clicked.connect(self._save_settings)
+        save_btn.clicked.connect(lambda: self._save_settings(show_message=True))
         ocr_key_row.addWidget(save_btn)
 
         ocr_key_row.addStretch()
@@ -162,6 +163,54 @@ class SettingsPage(BasePage):
         api_layout.addWidget(self._ocr_status_label)
 
         content_layout.addWidget(api_group)
+
+        # === Grupa: Aktualizacje ===
+        update_group = QGroupBox("Aktualizacje")
+        update_group.setStyleSheet(self._group_style())
+        update_layout = QVBoxLayout(update_group)
+        update_layout.setSpacing(12)
+
+        # Opis
+        update_desc = QLabel(
+            "Automatyczne sprawdzanie i pobieranie aktualizacji aplikacji."
+        )
+        update_desc.setStyleSheet("color: #8892a0; font-size: 13px;")
+        update_desc.setWordWrap(True)
+        update_layout.addWidget(update_desc)
+
+        # Toggle auto-update
+        self._auto_update_toggle = LabeledToggle("Automatyczne aktualizacje")
+        self._auto_update_toggle.set_checked(True)  # Domyślnie włączone
+        self._auto_update_toggle.toggled.connect(self._on_auto_update_changed)
+        update_layout.addWidget(self._auto_update_toggle)
+
+        # Wybór kanału
+        channel_row = QHBoxLayout()
+        channel_row.setSpacing(10)
+
+        channel_label = QLabel("Kanał aktualizacji:")
+        channel_label.setStyleSheet("color: #8892a0;")
+        channel_row.addWidget(channel_label)
+
+        self._update_channel_combo = StyledComboBox()
+        self._update_channel_combo.addItem("Stabilny", "stable")
+        self._update_channel_combo.addItem("Beta", "beta")
+        self._update_channel_combo.setFixedWidth(150)
+        self._update_channel_combo.currentIndexChanged.connect(self._on_channel_changed)
+        channel_row.addWidget(self._update_channel_combo)
+
+        channel_row.addStretch()
+        update_layout.addLayout(channel_row)
+
+        # Info o kanałach
+        channel_info = QLabel(
+            "• Stabilny - tylko sprawdzone wersje\n"
+            "• Beta - wczesny dostęp do nowych funkcji"
+        )
+        channel_info.setStyleSheet("color: #6b7280; font-size: 12px;")
+        update_layout.addWidget(channel_info)
+
+        content_layout.addWidget(update_group)
 
         # === Grupa: Informacje ===
         info_group = QGroupBox("PDFDeck")
@@ -245,6 +294,15 @@ class SettingsPage(BasePage):
             self._ocr_status_label.setText("ℹ Używany będzie demo key (ograniczony)")
             self._ocr_status_label.setStyleSheet("color: #e0a800; font-size: 12px;")
 
+    def _on_auto_update_changed(self, checked: bool) -> None:
+        """Obsługa zmiany przełącznika auto-update."""
+        self._update_channel_combo.setEnabled(checked)
+        self._save_settings()
+
+    def _on_channel_changed(self, index: int) -> None:
+        """Obsługa zmiany kanału aktualizacji."""
+        self._save_settings()
+
     def _load_settings(self) -> None:
         """Ładuje ustawienia z pliku."""
         if self._config_path.exists():
@@ -267,25 +325,42 @@ class SettingsPage(BasePage):
                 if ocr_key:
                     self._ocr_key_input.setText(ocr_key)
 
+                # Załaduj ustawienia aktualizacji
+                auto_update = settings.get("auto_update", True)
+                self._auto_update_toggle.set_checked(auto_update)
+
+                update_channel = settings.get("update_channel", "stable")
+                channel_idx = self._update_channel_combo.findData(update_channel)
+                if channel_idx >= 0:
+                    self._update_channel_combo.blockSignals(True)
+                    self._update_channel_combo.setCurrentIndex(channel_idx)
+                    self._update_channel_combo.blockSignals(False)
+
+                # Wyłącz combo jeśli auto-update jest wyłączone
+                self._update_channel_combo.setEnabled(auto_update)
+
             except Exception as e:
                 print(f"Błąd ładowania ustawień: {e}")
 
-    def _save_settings(self) -> None:
+    def _save_settings(self, show_message: bool = False) -> None:
         """Zapisuje ustawienia do pliku."""
         settings = {
             "language": self._i18n.current_language,
-            "ocr_api_key": self._ocr_key_input.text().strip()
+            "ocr_api_key": self._ocr_key_input.text().strip(),
+            "auto_update": self._auto_update_toggle.is_checked(),
+            "update_channel": self._update_channel_combo.currentData()
         }
 
         try:
             with open(self._config_path, "w", encoding="utf-8") as f:
                 json.dump(settings, f, indent=2)
 
-            QMessageBox.information(
-                self,
-                "Sukces",
-                "Ustawienia zostały zapisane!"
-            )
+            if show_message:
+                QMessageBox.information(
+                    self,
+                    "Sukces",
+                    "Ustawienia zostały zapisane!"
+                )
         except Exception as e:
             print(f"Błąd zapisywania ustawień: {e}")
             QMessageBox.critical(
@@ -308,6 +383,29 @@ class SettingsPage(BasePage):
                 pass
 
         return "helloworld"  # Demo key
+
+    @staticmethod
+    def get_update_settings() -> dict:
+        """Zwraca ustawienia aktualizacji."""
+        config_path = Path.home() / ".pdfdeck" / "settings.json"
+
+        defaults = {
+            "auto_update": True,
+            "update_channel": "stable"
+        }
+
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    settings = json.load(f)
+                    return {
+                        "auto_update": settings.get("auto_update", True),
+                        "update_channel": settings.get("update_channel", "stable")
+                    }
+            except Exception:
+                pass
+
+        return defaults
 
     # === Public API ===
 
