@@ -12,12 +12,13 @@ Funkcje:
 
 from typing import Optional, Dict
 from io import BytesIO
+from pathlib import Path
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QListWidget, QListWidgetItem,
     QSlider, QGroupBox, QComboBox, QCheckBox,
-    QColorDialog, QLineEdit, QScrollArea
+    QColorDialog, QLineEdit, QScrollArea, QFileDialog
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap, QColor, QPainter, QFont, QPen, QTransform
@@ -297,6 +298,9 @@ class StampPicker(QWidget):
         self._ink_splatter: bool = False
         self._auto_date: bool = False
 
+        # Lista załadowanych własnych pieczątek z plików
+        self._custom_stamps: Dict[str, Path] = {}  # klucz -> ścieżka do pliku
+
         self._renderer = StampRenderer()
         self._setup_ui()
 
@@ -372,6 +376,29 @@ class StampPicker(QWidget):
 
         self._stamps_list.currentRowChanged.connect(self._on_stamp_selected)
         layout.addWidget(self._stamps_list)
+
+        # Przycisk załaduj z pliku
+        load_btn = QPushButton("📁 Załaduj pieczątkę z pliku")
+        load_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #1f2940;
+                border: 1px solid #2d3a50;
+                border-radius: 6px;
+                padding: 8px;
+                color: #e0a800;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #2d3a50;
+                border-color: #e0a800;
+            }
+            QPushButton:pressed {
+                background-color: #0f1629;
+            }
+        """)
+        load_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        load_btn.clicked.connect(self._on_load_from_file)
+        layout.addWidget(load_btn)
 
         # === Panel własnej pieczątki ===
         self._custom_group = _styled_groupbox("Własna pieczątka")
@@ -716,24 +743,38 @@ class StampPicker(QWidget):
 
         layout.addWidget(effects_group)
 
-        # === Podgląd ===
-        preview_group = _styled_groupbox("Podgląd")
-        preview_layout = QVBoxLayout(preview_group)
-
-        self._preview_label = QLabel()
-        self._preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._preview_label.setMinimumHeight(120)
-        self._preview_label.setStyleSheet(
-            "background-color: #ffffff; border-radius: 4px;"
-        )
-        preview_layout.addWidget(self._preview_label)
-
-        layout.addWidget(preview_group)
-
         layout.addStretch()
 
         scroll.setWidget(content)
         main_layout.addWidget(scroll)
+
+    def _on_load_from_file(self) -> None:
+        """Obsługa załadowania pieczątki z pliku."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Wybierz plik pieczątki",
+            "",
+            "Pliki obrazów (*.png *.jpg *.jpeg *.bmp);;Wszystkie pliki (*.*)"
+        )
+
+        if not file_path:
+            return  # Użytkownik anulował
+
+        # Utwórz klucz dla custom stamp (bazując na nazwie pliku)
+        file_name = Path(file_path).stem
+        key = f"custom_file_{len(self._custom_stamps)}"
+
+        # Zapisz w słowniku
+        self._custom_stamps[key] = Path(file_path)
+
+        # Dodaj do listy (przed opcją "Własna pieczątka...")
+        insert_index = self._stamps_list.count() - 1  # Przed ostatnim elementem
+        item = QListWidgetItem(f"🖼️ {file_name}")
+        item.setData(Qt.ItemDataRole.UserRole, key)
+        self._stamps_list.insertItem(insert_index, item)
+
+        # Automatycznie wybierz załadowaną pieczątkę
+        self._stamps_list.setCurrentRow(insert_index)
 
     def _on_stamp_selected(self, row: int) -> None:
         """Obsługa wyboru pieczątki."""
@@ -746,6 +787,10 @@ class StampPicker(QWidget):
         if key == "custom":
             self._selected_stamp = None
             self._custom_group.setVisible(True)
+        elif key.startswith("custom_file_"):
+            # Pieczątka załadowana z pliku
+            self._selected_stamp = key
+            self._custom_group.setVisible(False)
         else:
             self._selected_stamp = key
             self._custom_group.setVisible(False)
@@ -857,6 +902,39 @@ class StampPicker(QWidget):
 
     def _build_config(self) -> Optional[StampConfig]:
         """Buduje StampConfig z aktualnych ustawień."""
+        # Obsługa pieczątek z plików
+        if self._selected_stamp and self._selected_stamp.startswith("custom_file_"):
+            stamp_path = self._custom_stamps.get(self._selected_stamp)
+            if not stamp_path:
+                return None
+
+            # Dla pieczątek z pliku używamy uproszczonej konfiguracji
+            # Większe mnożniki dla lepszego skalowania własnych obrazów
+            return StampConfig(
+                text="",  # Brak tekstu, używamy obrazu
+                position=Point(100, 100),
+                rotation=float(self._rotation),
+                rotation_random=False,
+                corner="center",
+                scale=1.0,
+                shape=StampShape.RECTANGLE,  # Nie ma znaczenia dla obrazów
+                border_style=BorderStyle.SOLID,  # Nie ma znaczenia
+                border_width=0.0,  # Brak ramki dla obrazów
+                color=(0, 0, 0),  # Nie ma znaczenia
+                opacity=self._opacity,
+                wear_level=self._wear_level,
+                vintage_effect=self._vintage_effect,
+                double_strike=self._double_strike,
+                ink_splatter=self._ink_splatter,
+                auto_date=False,  # Nie ma sensu dla obrazów
+                width=self._size * 8,  # Podwojony mnożnik dla lepszego skalowania
+                height=self._size * 4,  # Podwojony mnożnik
+                font_size=self._size * 0.6,
+                circular_font_size=self._size * 0.25,
+                stamp_path=stamp_path,  # KLUCZ: ścieżka do pliku
+            )
+
+        # Obsługa predefiniowanych pieczątek
         if self._selected_stamp:
             stamp = PRESET_STAMPS[self._selected_stamp]
             text = stamp["text"]
@@ -911,37 +989,10 @@ class StampPicker(QWidget):
         )
 
     def _update_preview(self) -> None:
-        """Aktualizuje podgląd pieczątki używając StampRenderer."""
+        """Emituje sygnał stamp_selected gdy zmienią się parametry."""
         config = self._build_config()
-        if not config:
-            self._preview_label.setText("Wybierz lub wpisz tekst")
-            return
-
-        try:
-            # Użyj renderera do wygenerowania podglądu
-            png_data = self._renderer.render_to_png(config)
-
-            # Konwertuj na QPixmap
-            pixmap = QPixmap()
-            pixmap.loadFromData(png_data)
-
-            # Skaluj do rozmiaru podglądu
-            scaled = pixmap.scaled(
-                200, 100,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            )
-
-            # Zastosuj rotację
-            if self._rotation != 0:
-                transform = QTransform().rotate(self._rotation)
-                scaled = scaled.transformed(transform, Qt.TransformationMode.SmoothTransformation)
-
-            self._preview_label.setPixmap(scaled)
-
-        except Exception as e:
-            # Fallback do prostego podglądu tekstowego
-            self._preview_label.setText(f"Podgląd: {config.text}")
+        if config:
+            self.stamp_selected.emit(config)
 
     def get_stamp_config(self) -> Optional[StampConfig]:
         """Zwraca aktualną konfigurację pieczątki."""

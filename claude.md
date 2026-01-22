@@ -70,12 +70,14 @@ PDFDeck/
 PDFDeck obsługuje zaawansowane operacje na plikach PDF:
 
 ### Zarządzanie dokumentem
+
 - Ładowanie/zapisywanie PDF
 - Zmiana kolejności stron, usuwanie
 - Łączenie i dzielenie dokumentów
 - Generowanie miniatur i podglądu
 
 ### Edycja treści
+
 - **Whiteout & Type** - Zakrywanie tekstu i wpisywanie nowego
 - **Wyszukiwanie tekstu** - Z obsługą regex
 - **Redakcja** - Trwałe usuwanie treści z PDF
@@ -85,6 +87,7 @@ PDFDeck obsługuje zaawansowane operacje na plikach PDF:
 - **Linki** - Zewnętrzne (URI) i wewnętrzne (do strony)
 
 ### Analiza dokumentu
+
 - **Preflight Check** - Wykrywanie problemów (puste strony, niska rozdzielczość, uszkodzone linki)
 - **Ekstrakcja tabel** - Wyciąganie danych tabelarycznych
 - **Wykrywanie nagłówków** - Na podstawie rozmiaru fontu
@@ -92,10 +95,12 @@ PDFDeck obsługuje zaawansowane operacje na plikach PDF:
 - **Auto-zakładki** - Generowanie spisu treści
 
 ### Formatowanie
+
 - **Normalizacja do A4** - Konwersja wszystkich stron
 - **N-up Layout** - Wiele stron na arkusz (2, 4, 6, 8, 9, 16)
 
 ### Operacje masowe
+
 - **Wypełnianie formularzy** - Z pliku CSV
 
 ## Architecture
@@ -247,14 +252,17 @@ python scripts/release.py 1.0.0 --force
 ## Common Issues
 
 **Aplikacja nie uruchamia się:**
+
 - Sprawdź czy PyQt6 jest zainstalowane: `pip install PyQt6`
 - Sprawdź wersję Pythona: `python --version` (wymaga 3.10+)
 
 **Operacje PDF nie działają:**
+
 - Sprawdź czy PyMuPDF jest zainstalowane: `pip install pymupdf`
 - Upewnij się że plik PDF nie jest uszkodzony
 
 **Build fails:**
+
 - Usuń `build/`, `dist/` i spróbuj ponownie
 - Sprawdź czy PyInstaller jest zainstalowany
 

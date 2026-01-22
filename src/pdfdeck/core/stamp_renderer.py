@@ -43,6 +43,10 @@ class StampRenderer:
         # Przetwórz tekst - zamień [DATA] na aktualną datę
         processed_config = self._process_auto_date(config)
 
+        # Jeśli użytkownik załadował własną pieczątkę z pliku, użyj jej
+        if processed_config.stamp_path:
+            return self._render_from_file(processed_config)
+
         # Oblicz rozmiar w pikselach (z marginesem na splatter)
         margin = 20 if processed_config.ink_splatter else 0
         width_px = int(processed_config.width * self.DPI / 72) + margin * 2
@@ -112,6 +116,80 @@ class StampRenderer:
         from dataclasses import replace
         return replace(config, text=new_text)
 
+
+    def _render_from_file(self, config: StampConfig) -> bytes:
+        """
+        Renderuje pieczątkę z pliku obrazu.
+
+        Args:
+            config: Konfiguracja z ustawionym stamp_path
+
+        Returns:
+            PNG bytes z zastosowanymi efektami
+        """
+        # Załaduj obraz z pliku
+        try:
+            img = Image.open(config.stamp_path)
+
+            # Konwertuj do RGBA jeśli potrzeba
+            if img.mode != "RGBA":
+                img = img.convert("RGBA")
+
+            # Przeskaluj do żądanego rozmiaru
+            target_width = int(config.width * self.DPI / 72)
+            target_height = int(config.height * self.DPI / 72)
+
+            # Oblicz współczynnik skalowania zachowując proporcje
+            width_ratio = target_width / img.width
+            height_ratio = target_height / img.height
+            scale_ratio = min(width_ratio, height_ratio)  # Dopasuj do mniejszego wymiaru
+
+            # Nowy rozmiar z zachowaniem proporcji
+            new_width = int(img.width * scale_ratio)
+            new_height = int(img.height * scale_ratio)
+
+            # Przeskaluj obraz (resize działa w obie strony - powiększa i zmniejsza)
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+            # Utwórz nowy obraz z właściwym rozmiarem i wycentruj załadowany obraz
+            final_img = Image.new("RGBA", (target_width, target_height), (0, 0, 0, 0))
+
+            # Wycentruj obraz
+            x = (target_width - new_width) // 2
+            y = (target_height - new_height) // 2
+            final_img.paste(img, (x, y), img)
+
+            # Aplikuj efekty (tak samo jak dla generowanych pieczątek)
+            if config.double_strike:
+                final_img = self._apply_double_strike(final_img)
+
+            if config.vintage_effect:
+                final_img = self._apply_vintage_effect(final_img)
+
+            if config.wear_level != WearLevel.NONE:
+                final_img = self._apply_wear_effect(final_img, config.wear_level)
+
+            if config.ink_splatter:
+                # Dla splatter potrzebujemy koloru - użyjmy czarnego jako domyślny
+                color_rgba = (0, 0, 0, 255)
+                final_img = self._apply_ink_splatter(final_img, color_rgba)
+
+            if config.opacity < 1.0:
+                final_img = self._apply_opacity(final_img, config.opacity)
+
+            # Konwertuj do bytes
+            buffer = BytesIO()
+            final_img.save(buffer, format="PNG")
+            return buffer.getvalue()
+
+        except Exception as e:
+            # W razie błędu zwróć pusty obraz
+            print(f"Błąd ładowania pieczątki z pliku: {e}")
+            empty_img = Image.new("RGBA", (100, 50), (0, 0, 0, 0))
+            buffer = BytesIO()
+            empty_img.save(buffer, format="PNG")
+            return buffer.getvalue()
+
     def render_to_svg(self, config: StampConfig) -> str:
         """
         Renderuje pieczątkę do SVG.
@@ -157,7 +235,16 @@ class StampRenderer:
         # Rysuj ramkę w zależności od stylu
         self._draw_border(draw, rect, config.border_style, color, border_width)
 
-        # Rysuj tekst (obsługa wieloliniowego)
+        # Oblicz margines wewnętrzny dla tekstu (większy dla podwójnej ramki)
+        if config.border_style == BorderStyle.DOUBLE:
+            # Dla podwójnej ramki: border_width + gap + border_width + dodatkowy margines
+            inner_padding = border_width + 14 + border_width + 8  # Minimalny margines dla tekstu
+        elif config.border_style == BorderStyle.THICK:
+            inner_padding = border_width * 2 + 6
+        else:
+            inner_padding = border_width + 6
+
+        # Rysuj tekst (obsługa wieloliniowego) z marginesem wewnętrznym
         font_size = int(config.font_size * self.DPI / 72)
         font = self._get_font(font_size)
         text = config.text.upper()
@@ -171,6 +258,8 @@ class StampRenderer:
         # Oblicz wysokość każdej linii
         line_heights = []
         line_widths = []
+        max_width = width - 2 * (padding + inner_padding)
+
         for line in lines:
             bbox = draw.textbbox((0, 0), line, font=font)
             line_widths.append(bbox[2] - bbox[0])
@@ -180,7 +269,7 @@ class StampRenderer:
         line_spacing = font_size // 4
         total_height += line_spacing * (len(lines) - 1)
 
-        # Rysuj każdą linię wycentrowaną
+        # Rysuj każdą linię wycentrowaną (z uwzględnieniem marginesu)
         current_y = cy - total_height // 2
         for i, line in enumerate(lines):
             line_width = line_widths[i]
@@ -213,8 +302,9 @@ class StampRenderer:
                 outline=color,
                 width=border_width,
             )
-            # Wewnętrzny okrąg
-            inner_radius = radius - border_width - 4
+            # Wewnętrzny okrąg (większy odstęp dla tekstu)
+            inner_gap = border_width + 14  # Umiarkowany gap między ramkami
+            inner_radius = radius - inner_gap - border_width
             draw.ellipse(
                 (cx - inner_radius, cy - inner_radius, cx + inner_radius, cy + inner_radius),
                 outline=color,
@@ -239,13 +329,21 @@ class StampRenderer:
                 width=border_width,
             )
 
+        # Oblicz margines wewnętrzny dla tekstu
+        if config.border_style == BorderStyle.DOUBLE:
+            inner_padding = border_width + 14 + border_width + 8  # Minimalny margines dla tekstu
+        elif config.border_style == BorderStyle.THICK:
+            inner_padding = border_width * 2 + 6
+        else:
+            inner_padding = border_width + 6
+
         # Rysuj tekst po obwodzie
         if config.circular_text:
             self._draw_text_on_arc(
                 img,
                 config.circular_text.upper(),
                 (cx, cy),
-                radius - border_width - 15,
+                radius - inner_padding - 10,
                 color,
                 int(config.circular_font_size * self.DPI / 72),
             )
@@ -256,10 +354,36 @@ class StampRenderer:
             font = self._get_font(font_size)
             text = config.text.upper()
 
+            # Oblicz bezpieczny promień dla tekstu
+            if config.border_style == BorderStyle.DOUBLE:
+                inner_gap = border_width + 14
+                safe_radius = radius - inner_gap - border_width - 6  # Dodatkowy margines
+            elif config.border_style == BorderStyle.THICK:
+                safe_radius = radius - (border_width * 2) - 12
+            else:
+                safe_radius = radius - border_width - 12
+
+            # Maksymalna szerokość = średnica bezpiecznego okręgu * 0.85 (dla marginesu)
+            max_text_width = safe_radius * 2 * 0.85
+
             # Podziel na linie (filtruj puste)
             lines = [line for line in text.split('\n') if line.strip()]
             if lines:
-                # Oblicz wysokość każdej linii i całkowitą wysokość
+                # Znajdź najszerszą linię
+                max_line_width = 0
+                for line in lines:
+                    bbox = draw.textbbox((0, 0), line, font=font)
+                    line_width = bbox[2] - bbox[0]
+                    max_line_width = max(max_line_width, line_width)
+
+                # Zmniejsz font jeśli przekracza max_text_width
+                if max_line_width > max_text_width:
+                    scale_factor = (max_text_width / max_line_width) * 0.95  # 0.95 dla bezpiecznego marginesu
+                    font_size = int(font_size * scale_factor)
+                    font_size = max(font_size, int(8 * self.DPI / 72))  # Minimum 8pt
+                    font = self._get_font(font_size)
+
+                # Teraz rysuj z dostosowanym fontem
                 line_heights = []
                 line_widths = []
                 for line in lines:
@@ -292,12 +416,21 @@ class StampRenderer:
         padding = 5 + offset
         border_width = int(config.border_width * self.DPI / 72)
 
+        # Oblicz margines wewnętrzny dla tekstu (większy dla podwójnej ramki)
+        if config.border_style == BorderStyle.DOUBLE:
+            # Dla podwójnej ramki: border_width + gap + border_width + dodatkowy margines
+            inner_padding = border_width + 14 + border_width + 8  # Minimalny margines dla tekstu
+        elif config.border_style == BorderStyle.THICK:
+            inner_padding = border_width * 2 + 6
+        else:
+            inner_padding = border_width + 6
+
         # Elipsa
         rect = (padding, padding, width - padding - 1, height - padding - 1)
 
         if config.border_style == BorderStyle.DOUBLE:
             draw.ellipse(rect, outline=color, width=border_width)
-            inner_gap = border_width + 4
+            inner_gap = border_width + 14  # Umiarkowany gap między ramkami
             inner_rect = (
                 padding + inner_gap,
                 padding + inner_gap,
@@ -319,10 +452,41 @@ class StampRenderer:
             text = config.text.upper()
             cx, cy = width // 2, height // 2
 
+            # Oblicz bezpieczne wymiary dla tekstu
+            if config.border_style == BorderStyle.DOUBLE:
+                inner_gap = border_width + 14
+                safe_width = width - 2 * (padding + inner_gap + border_width + 6)
+                safe_height = height - 2 * (padding + inner_gap + border_width + 6)
+            elif config.border_style == BorderStyle.THICK:
+                margin = border_width * 2 + 12
+                safe_width = width - 2 * (padding + margin)
+                safe_height = height - 2 * (padding + margin)
+            else:
+                margin = border_width + 12
+                safe_width = width - 2 * (padding + margin)
+                safe_height = height - 2 * (padding + margin)
+
+            # Maksymalna szerokość tekstu (85% bezpiecznej szerokości dla marginesu)
+            max_text_width = safe_width * 0.85
+
             # Podziel na linie (filtruj puste)
             lines = [line for line in text.split('\n') if line.strip()]
             if lines:
-                # Oblicz wysokość każdej linii
+                # Znajdź najszerszą linię
+                max_line_width = 0
+                for line in lines:
+                    bbox = draw.textbbox((0, 0), line, font=font)
+                    line_width = bbox[2] - bbox[0]
+                    max_line_width = max(max_line_width, line_width)
+
+                # Zmniejsz font jeśli przekracza max_text_width
+                if max_line_width > max_text_width:
+                    scale_factor = (max_text_width / max_line_width) * 0.95
+                    font_size = int(font_size * scale_factor)
+                    font_size = max(font_size, int(8 * self.DPI / 72))  # Minimum 8pt
+                    font = self._get_font(font_size)
+
+                # Oblicz wysokość każdej linii z dostosowanym fontem
                 line_heights = []
                 line_widths = []
                 for line in lines:
@@ -426,8 +590,8 @@ class StampRenderer:
         elif style == BorderStyle.DOUBLE:
             # Zewnętrzna ramka
             draw.rectangle(rect, outline=color, width=width)
-            # Wewnętrzna ramka
-            gap = width + 4
+            # Wewnętrzna ramka (większy odstęp dla tekstu)
+            gap = width + 24  # Zwiększony gap dla większej przestrzeni na tekst
             inner = (x0 + gap, y0 + gap, x1 - gap, y1 - gap)
             draw.rectangle(inner, outline=color, width=width)
 

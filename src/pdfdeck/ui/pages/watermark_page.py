@@ -14,16 +14,25 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QSpinBox, QDoubleSpinBox, QSlider,
     QGroupBox, QMessageBox, QColorDialog, QFrame,
-    QTabWidget, QScrollArea, QSplitter, QSizePolicy
+    QTabWidget, QScrollArea, QSplitter, QSizePolicy,
+    QGraphicsView, QGraphicsScene, QGraphicsTextItem,
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtGui import QColor, QPixmap, QPainter, QFont, QBrush
 
 from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.styled_button import StyledButton
 from pdfdeck.ui.widgets.styled_combo import StyledComboBox
 from pdfdeck.ui.widgets.stamp_picker import StampPicker
+from pdfdeck.ui.widgets.profile_combo import ProfileComboBox
 from pdfdeck.core.models import WatermarkConfig
+from pdfdeck.core.profile_manager import (
+    ProfileManager,
+    ProfileType,
+    ProfileMetadata,
+    WatermarkProfile,
+    StampProfile,
+)
 
 if TYPE_CHECKING:
     from pdfdeck.core.pdf_manager import PDFManager
@@ -92,6 +101,8 @@ class WatermarkPage(BasePage):
         super().__init__("Znaki wodne i pieczątki", parent)
 
         self._pdf_manager = pdf_manager
+        self._loaded_stamp_config = None  # Konfiguracja załadowana z profilu
+        self._selected_stamp_config = None  # Aktualnie wybrana pieczątka z pickera
         self._setup_tabs_ui()
 
     def _setup_tabs_ui(self) -> None:
@@ -139,53 +150,113 @@ class WatermarkPage(BasePage):
     def _setup_stamp_tab(self, tab: QWidget) -> None:
         """Tworzy interfejs zakładki pieczątek."""
         layout = QVBoxLayout(tab)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        # Ustawienia rotacji i narożnika
-        settings_row = QHBoxLayout()
-        
+        # Scroll area dla całej zawartości
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setStyleSheet(self._scroll_style())
+
+        # Kontener wewnętrzny
+        content = QWidget()
+        content.setStyleSheet("background-color: transparent;")
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(10, 10, 10, 10)
+        content_layout.setSpacing(15)
+
+        # Splitter - pozwala użytkownikowi zmieniać proporcje
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setStyleSheet("""
+            QSplitter::handle {
+                background-color: #2d3a50;
+                width: 3px;
+            }
+            QSplitter::handle:hover {
+                background-color: #e0a800;
+            }
+        """)
+
+        # === Lewa strona: Konfiguracja ===
+        config_widget = QWidget()
+        config_widget.setMinimumWidth(280)
+        config_layout = QVBoxLayout(config_widget)
+        config_layout.setContentsMargins(0, 0, 10, 0)
+        config_layout.setSpacing(10)
+
+        # --- Grupa: Ustawienia pieczątki ---
+        stamp_group = QGroupBox("Ustawienia pieczątki")
+        stamp_group.setStyleSheet(self._group_style())
+        stamp_layout = QVBoxLayout(stamp_group)
+        stamp_layout.setSpacing(8)
+
+        # Profil
+        profile_label = QLabel("Profil:")
+        profile_label.setStyleSheet("color: #8892a0; font-size: 13px;")
+        stamp_layout.addWidget(profile_label)
+
+        self._stamp_profile_combo = ProfileComboBox(
+            ProfileType.STAMP,
+            on_save_clicked=self._save_stamp_profile,
+        )
+        self._stamp_profile_combo.profile_selected.connect(self._load_stamp_profile)
+        stamp_layout.addWidget(self._stamp_profile_combo)
+
+        stamp_layout.addSpacing(5)
+
         # Rotacja
+        rotation_row = QHBoxLayout()
         rotation_label = QLabel("Rotacja:")
         rotation_label.setStyleSheet("color: #8892a0;")
-        rotation_label.setFixedWidth(80)
-        settings_row.addWidget(rotation_label)
-        
+        rotation_label.setFixedWidth(70)
+        rotation_row.addWidget(rotation_label)
+
         self._stamp_rotation_slider = QSlider(Qt.Orientation.Horizontal)
         self._stamp_rotation_slider.setMinimum(-45)
         self._stamp_rotation_slider.setMaximum(45)
         self._stamp_rotation_slider.setValue(0)
-        self._stamp_rotation_slider.setStyleSheet("""
-            QSlider::groove:horizontal {
-                background: #1f2937;
-                height: 6px;
-                border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
-                background: #e0a800;
-                width: 16px;
-                margin: -5px 0;
-                border-radius: 8px;
-            }
-        """)
-        settings_row.addWidget(self._stamp_rotation_slider)
-        
+        self._stamp_rotation_slider.setStyleSheet(self._slider_style())
+        self._stamp_rotation_slider.valueChanged.connect(self._update_stamp_preview)
+        rotation_row.addWidget(self._stamp_rotation_slider)
+
         self._stamp_rotation_value = QLabel("0°")
-        self._stamp_rotation_value.setStyleSheet("color: #8892a0;")
-        self._stamp_rotation_value.setFixedWidth(40)
+        self._stamp_rotation_value.setStyleSheet("color: #8892a0; min-width: 35px;")
         self._stamp_rotation_slider.valueChanged.connect(
             lambda v: self._stamp_rotation_value.setText(f"{v}°")
         )
-        settings_row.addWidget(self._stamp_rotation_value)
-        
-        settings_row.addSpacing(20)
-        
+        rotation_row.addWidget(self._stamp_rotation_value)
+        stamp_layout.addLayout(rotation_row)
+
+        # Rozmiar
+        size_row = QHBoxLayout()
+        size_label = QLabel("Rozmiar:")
+        size_label.setStyleSheet("color: #8892a0;")
+        size_label.setFixedWidth(70)
+        size_row.addWidget(size_label)
+
+        self._stamp_size_slider = QSlider(Qt.Orientation.Horizontal)
+        self._stamp_size_slider.setMinimum(24)
+        self._stamp_size_slider.setMaximum(120)
+        self._stamp_size_slider.setValue(48)
+        self._stamp_size_slider.setStyleSheet(self._slider_style())
+        self._stamp_size_slider.valueChanged.connect(self._on_stamp_size_changed)
+        size_row.addWidget(self._stamp_size_slider)
+
+        self._stamp_size_value = QLabel("48pt")
+        self._stamp_size_value.setStyleSheet("color: #8892a0; min-width: 45px;")
+        self._stamp_size_slider.valueChanged.connect(
+            lambda v: self._stamp_size_value.setText(f"{v}pt")
+        )
+        size_row.addWidget(self._stamp_size_value)
+        stamp_layout.addLayout(size_row)
+
         # Narożnik
+        corner_row = QHBoxLayout()
         corner_label = QLabel("Narożnik:")
         corner_label.setStyleSheet("color: #8892a0;")
-        corner_label.setFixedWidth(80)
-        settings_row.addWidget(corner_label)
-        
-        from pdfdeck.ui.widgets.styled_combo import StyledComboBox
+        corner_label.setFixedWidth(70)
+        corner_row.addWidget(corner_label)
+
         self._stamp_corner_combo = StyledComboBox()
         self._stamp_corner_combo.addItem("Środek", "center")
         self._stamp_corner_combo.addItem("Górny lewy", "top-left")
@@ -194,21 +265,33 @@ class WatermarkPage(BasePage):
         self._stamp_corner_combo.addItem("Dolny lewy", "bottom-left")
         self._stamp_corner_combo.addItem("Dolny środek", "bottom-center")
         self._stamp_corner_combo.addItem("Dolny prawy", "bottom-right")
-        self._stamp_corner_combo.setFixedWidth(150)
-        settings_row.addWidget(self._stamp_corner_combo)
-        
-        settings_row.addStretch()
-        layout.addLayout(settings_row)
+        self._stamp_corner_combo.currentIndexChanged.connect(lambda: self._update_stamp_preview())
+        corner_row.addWidget(self._stamp_corner_combo)
+        corner_row.addStretch()
+        stamp_layout.addLayout(corner_row)
+
+        # Przycisk dodaj
+        self._add_stamp_btn = StyledButton("Dodaj pieczątkę", "primary")
+        self._add_stamp_btn.clicked.connect(self._on_add_stamp)
+        stamp_layout.addWidget(self._add_stamp_btn)
+
+        config_layout.addWidget(stamp_group)
+
+        # --- Grupa: Wybór pieczątki ---
+        picker_group = QGroupBox("Dostępne pieczątki")
+        picker_group.setStyleSheet(self._group_style())
+        picker_layout = QVBoxLayout(picker_group)
+        picker_layout.setSpacing(6)
 
         # StampPicker widget
         self._stamp_picker = StampPicker()
         self._stamp_picker.stamp_selected.connect(self._on_stamp_selected)
 
         # Scroll area dla stamp picker
-        scroll = QScrollArea()
-        scroll.setWidget(self._stamp_picker)
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
+        picker_scroll = QScrollArea()
+        picker_scroll.setWidget(self._stamp_picker)
+        picker_scroll.setWidgetResizable(True)
+        picker_scroll.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: transparent;
@@ -227,22 +310,148 @@ class WatermarkPage(BasePage):
                 background-color: #e0a800;
             }
         """)
+        picker_scroll.setMinimumHeight(200)
+        picker_layout.addWidget(picker_scroll)
 
-        layout.addWidget(scroll, 1)
+        config_layout.addWidget(picker_group, 1)
 
-        # Przycisk dodania pieczątki
-        btn_row = QHBoxLayout()
-        btn_row.addStretch()
+        splitter.addWidget(config_widget)
 
-        self._add_stamp_btn = StyledButton("Dodaj pieczątkę do strony", "primary")
-        self._add_stamp_btn.clicked.connect(self._on_add_stamp)
-        btn_row.addWidget(self._add_stamp_btn)
+        # === Prawa strona: Podgląd ===
+        preview_widget = QWidget()
+        preview_widget.setMinimumWidth(200)
+        preview_layout = QVBoxLayout(preview_widget)
+        preview_layout.setContentsMargins(10, 0, 0, 0)
 
-        layout.addLayout(btn_row)
+        preview_label = QLabel("Podgląd:")
+        preview_label.setStyleSheet("color: #8892a0; font-size: 14px;")
+        preview_layout.addWidget(preview_label)
+
+        # Scena i widok dla podglądu pieczątki
+        self._stamp_preview_scene = QGraphicsScene()
+        self._stamp_preview_scene.setBackgroundBrush(QBrush(QColor("#ffffff")))
+
+        self._stamp_preview_view = QGraphicsView(self._stamp_preview_scene)
+        self._stamp_preview_view.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self._stamp_preview_view.setStyleSheet("""
+            QGraphicsView {
+                background-color: #ffffff;
+                border: 1px solid #2d3a50;
+                border-radius: 8px;
+            }
+        """)
+        self._stamp_preview_view.setMinimumSize(200, 280)
+        self._stamp_preview_view.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+
+        preview_layout.addWidget(self._stamp_preview_view, 1)
+
+        splitter.addWidget(preview_widget)
+        splitter.setSizes([350, 450])
+
+        content_layout.addWidget(splitter, 1)
+
+        scroll.setWidget(content)
+        layout.addWidget(scroll)
 
     def _on_stamp_selected(self, config) -> None:
         """Obsługa wyboru pieczątki."""
         self._selected_stamp_config = config
+        # Resetuj profil gdy użytkownik wybiera nową pieczątkę w pickerze
+        self._loaded_stamp_config = None
+        # Aktualizuj podgląd
+        self._update_stamp_preview()
+
+    def _update_stamp_preview(self) -> None:
+        """Aktualizuje podgląd pieczątki z rotacją."""
+        from pdfdeck.core.stamp_renderer import StampRenderer
+
+        # Wyczyść scenę
+        self._stamp_preview_scene.clear()
+
+        # Pobierz konfigurację pieczątki
+        config = self._stamp_picker.get_stamp_config()
+        if not config:
+            # Brak wybranej pieczątki - pokaż tekst
+            text_item = QGraphicsTextItem("Wybierz pieczątkę\nz listy")
+            font = QFont("Arial", 16)
+            text_item.setFont(font)
+            text_item.setDefaultTextColor(QColor(150, 150, 150))
+            self._stamp_preview_scene.addItem(text_item)
+            self._stamp_preview_scene.setSceneRect(self._stamp_preview_scene.itemsBoundingRect())
+            return
+
+        try:
+            # Nadpisz rozmiar wartością z lokalnego slidera
+            size = self._stamp_size_slider.value()
+
+            # Dla pieczątek z pliku używamy większych mnożników
+            if config.stamp_path:
+                config.width = size * 8
+                config.height = size * 4
+            else:
+                config.width = size * 4
+                config.height = size * 2 if config.shape.value != 'circle' else size * 4
+
+            config.font_size = size * 0.6
+            config.circular_font_size = size * 0.25
+
+            # Użyj renderera do wygenerowania pieczątki
+            renderer = StampRenderer()
+            png_data = renderer.render_to_png(config)
+
+            # Załaduj jako pixmap
+            pixmap = QPixmap()
+            pixmap.loadFromData(png_data)
+
+            if pixmap.isNull():
+                # Fallback - pokaż tekst
+                text_item = QGraphicsTextItem(config.text)
+                font = QFont("Arial", 16)
+                text_item.setFont(font)
+                text_item.setDefaultTextColor(QColor(150, 150, 150))
+                self._stamp_preview_scene.addItem(text_item)
+                self._stamp_preview_scene.setSceneRect(self._stamp_preview_scene.itemsBoundingRect())
+                return
+
+            # Skaluj do rozsądnego rozmiaru dla podglądu (max 300px)
+            max_size = 300
+            if pixmap.width() > max_size or pixmap.height() > max_size:
+                pixmap = pixmap.scaled(
+                    max_size, max_size,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation
+                )
+
+            # Dodaj do sceny
+            pixmap_item = self._stamp_preview_scene.addPixmap(pixmap)
+
+            # Zastosuj rotację z slidera (nadpisuje rotację z StampPickera)
+            rotation = self._stamp_rotation_slider.value()
+            rect = pixmap_item.boundingRect()
+            pixmap_item.setTransformOriginPoint(rect.center())
+            pixmap_item.setRotation(rotation)
+
+            # Wycentruj w scenie
+            self._stamp_preview_scene.setSceneRect(self._stamp_preview_scene.itemsBoundingRect())
+            scene_rect = self._stamp_preview_scene.sceneRect()
+            scene_rect.adjust(-50, -50, 50, 50)
+            self._stamp_preview_view.fitInView(scene_rect, Qt.AspectRatioMode.KeepAspectRatio)
+
+        except Exception as e:
+            # W przypadku błędu pokaż komunikat
+            text_item = QGraphicsTextItem(f"Błąd podglądu:\n{str(e)}")
+            font = QFont("Arial", 12)
+            text_item.setFont(font)
+            text_item.setDefaultTextColor(QColor(200, 50, 50))
+            self._stamp_preview_scene.addItem(text_item)
+            self._stamp_preview_scene.setSceneRect(self._stamp_preview_scene.itemsBoundingRect())
+
+    def _on_stamp_size_changed(self, value: int) -> None:
+        """Obsługa zmiany rozmiaru pieczątki."""
+        # Po prostu zaktualizuj podgląd
+        self._update_stamp_preview()
 
     def _on_add_stamp(self) -> None:
         """Obsługa dodawania pieczątki do PDF."""
@@ -254,18 +463,22 @@ class WatermarkPage(BasePage):
             )
             return
 
-        config = self._stamp_picker.get_stamp_config()
-        if not config:
-            QMessageBox.warning(
-                self,
-                "Błąd",
-                "Wybierz pieczątkę z listy lub stwórz własną"
-            )
-            return
+        # Użyj konfiguracji z profilu jeśli jest załadowana, w przeciwnym razie z pickera
+        if self._loaded_stamp_config is not None:
+            config = self._loaded_stamp_config
+        else:
+            config = self._stamp_picker.get_stamp_config()
+            if not config:
+                QMessageBox.warning(
+                    self,
+                    "Błąd",
+                    "Wybierz pieczątkę z listy lub stwórz własną"
+                )
+                return
 
-        # Zastosuj rotację i narożnik z UI
-        config.rotation = float(self._stamp_rotation_slider.value())
-        config.corner = self._stamp_corner_combo.currentData()
+            # Zastosuj rotację i narożnik z UI tylko dla konfiguracji z pickera
+            config.rotation = float(self._stamp_rotation_slider.value())
+            config.corner = self._stamp_corner_combo.currentData()
 
         try:
             # Dodaj do aktualnej strony (index 0)
@@ -328,6 +541,20 @@ class WatermarkPage(BasePage):
         watermark_group.setStyleSheet(self._group_style())
         watermark_layout = QVBoxLayout(watermark_group)
         watermark_layout.setSpacing(8)
+
+        # Profil
+        profile_label = QLabel("Profil:")
+        profile_label.setStyleSheet("color: #8892a0; font-size: 13px;")
+        watermark_layout.addWidget(profile_label)
+
+        self._watermark_profile_combo = ProfileComboBox(
+            ProfileType.WATERMARK,
+            on_save_clicked=self._save_watermark_profile,
+        )
+        self._watermark_profile_combo.profile_selected.connect(self._load_watermark_profile)
+        watermark_layout.addWidget(self._watermark_profile_combo)
+
+        watermark_layout.addSpacing(5)
 
         # Tekst
         text_row = QHBoxLayout()
@@ -465,33 +692,34 @@ class WatermarkPage(BasePage):
         preview_label.setStyleSheet("color: #8892a0; font-size: 14px;")
         preview_layout.addWidget(preview_label)
 
-        self._preview_frame = QFrame()
-        self._preview_frame.setStyleSheet("""
-            QFrame {
+        # Scena i widok dla podglądu z rotacją
+        self._preview_scene = QGraphicsScene()
+        self._preview_scene.setBackgroundBrush(QBrush(QColor("#ffffff")))
+
+        self._preview_view = QGraphicsView(self._preview_scene)
+        self._preview_view.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self._preview_view.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+        self._preview_view.setStyleSheet("""
+            QGraphicsView {
                 background-color: #ffffff;
                 border: 1px solid #2d3a50;
                 border-radius: 8px;
             }
         """)
-        self._preview_frame.setMinimumSize(200, 280)
-        self._preview_frame.setSizePolicy(
+        self._preview_view.setMinimumSize(200, 280)
+        self._preview_view.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
 
-        preview_inner_layout = QVBoxLayout(self._preview_frame)
-        preview_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Tekst podglądu
+        self._preview_text_item = QGraphicsTextItem("PRZYKŁAD")
+        font = QFont("Arial", 48)
+        font.setBold(True)
+        self._preview_text_item.setFont(font)
+        self._preview_text_item.setDefaultTextColor(QColor(128, 128, 128, 76))
+        self._preview_scene.addItem(self._preview_text_item)
 
-        self._preview_text = QLabel("PRZYKŁAD")
-        self._preview_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._preview_text.setWordWrap(True)
-        self._preview_text.setStyleSheet("""
-            color: rgba(128, 128, 128, 0.3);
-            font-size: 48px;
-            font-weight: bold;
-        """)
-        preview_inner_layout.addWidget(self._preview_text)
-
-        preview_layout.addWidget(self._preview_frame, 1)
+        preview_layout.addWidget(self._preview_view, 1)
 
         splitter.addWidget(preview_widget)
         splitter.setSizes([350, 450])
@@ -597,22 +825,36 @@ class WatermarkPage(BasePage):
         """
 
     def _update_preview(self) -> None:
-        """Aktualizuje podgląd znaku wodnego."""
+        """Aktualizuje podgląd znaku wodnego z rotacją."""
         text = self._watermark_text.text() or "PRZYKŁAD"
         size = self._font_size.value()
         opacity = self._opacity_slider.value() / 100.0
+        rotation = self._rotation.value()
         color = self._color_btn.color
 
-        # Skaluj rozmiar do podglądu (max 60px)
-        preview_size = min(size, 60)
+        # Aktualizuj tekst i font
+        self._preview_text_item.setPlainText(text)
+        font = QFont("Arial", size)
+        font.setBold(True)
+        self._preview_text_item.setFont(font)
 
-        # Aktualizuj podgląd
-        self._preview_text.setText(text)
-        self._preview_text.setStyleSheet(f"""
-            color: rgba({color.red()}, {color.green()}, {color.blue()}, {opacity});
-            font-size: {preview_size}px;
-            font-weight: bold;
-        """)
+        # Kolor z przezroczystością
+        preview_color = QColor(color)
+        preview_color.setAlphaF(opacity)
+        self._preview_text_item.setDefaultTextColor(preview_color)
+
+        # Rotacja - najpierw reset, potem ustaw punkt obrotu i rotację
+        self._preview_text_item.setRotation(0)
+        rect = self._preview_text_item.boundingRect()
+        self._preview_text_item.setTransformOriginPoint(rect.center())
+        self._preview_text_item.setRotation(rotation)
+
+        # Wycentruj w scenie
+        self._preview_scene.setSceneRect(self._preview_scene.itemsBoundingRect())
+        # Dodaj marginesy wokół tekstu
+        scene_rect = self._preview_scene.sceneRect()
+        scene_rect.adjust(-50, -50, 50, 50)
+        self._preview_view.fitInView(scene_rect, Qt.AspectRatioMode.KeepAspectRatio)
 
     def _apply_preset(self, text: str, color: tuple) -> None:
         """Stosuje preset znaku wodnego."""
@@ -665,6 +907,136 @@ class WatermarkPage(BasePage):
                 "Błąd",
                 f"Nie można dodać znaku wodnego:\n{e}"
             )
+
+    # === Profile management ===
+
+    def _save_watermark_profile(self) -> None:
+        """Zapisuje aktualną konfigurację jako profil watermark."""
+        from PyQt6.QtWidgets import QInputDialog
+        from datetime import datetime
+
+        text = self._watermark_text.text().strip()
+        if not text:
+            QMessageBox.warning(
+                self,
+                "Błąd",
+                "Wpisz tekst znaku wodnego przed zapisaniem profilu",
+            )
+            return
+
+        name, ok = QInputDialog.getText(self, "Zapisz profil", "Nazwa profilu:")
+        if not ok or not name.strip():
+            return
+
+        color = self._color_btn.color
+        config = WatermarkConfig(
+            text=text,
+            font_size=float(self._font_size.value()),
+            rotation=float(self._rotation.value()),
+            color=(color.redF(), color.greenF(), color.blueF()),
+            opacity=self._opacity_slider.value() / 100.0,
+            overlay=self._overlay_combo.currentData(),
+        )
+
+        profile = WatermarkProfile(
+            metadata=ProfileMetadata(
+                name=name.strip(),
+                profile_type=ProfileType.WATERMARK,
+                description=f"Znak wodny: {text}",
+                created_at=datetime.now().isoformat(),
+                modified_at=datetime.now().isoformat(),
+            ),
+            config=config,
+        )
+
+        pm = ProfileManager()
+        pm.save_watermark_profile(profile)
+
+        self._watermark_profile_combo.refresh()
+        QMessageBox.information(self, "Sukces", f"Profil '{name}' zapisany!")
+
+    def _load_watermark_profile(self, name: str) -> None:
+        """Ładuje profil watermark do kontrolek UI."""
+        pm = ProfileManager()
+        profile = pm.get_watermark_profile(name)
+        if not profile:
+            return
+
+        config = profile.config
+        self._watermark_text.setText(config.text)
+        self._font_size.setValue(int(config.font_size))
+        self._rotation.setValue(int(config.rotation))
+        self._opacity_slider.setValue(int(config.opacity * 100))
+
+        # Kolor - konwersja RGB 0-1 -> QColor
+        color = QColor.fromRgbF(config.color[0], config.color[1], config.color[2])
+        self._color_btn.color = color
+
+        # Overlay
+        self._overlay_combo.setCurrentIndex(1 if config.overlay else 0)
+
+        self._update_preview()
+
+    def _save_stamp_profile(self) -> None:
+        """Zapisuje aktualną konfigurację jako profil pieczątki."""
+        from PyQt6.QtWidgets import QInputDialog
+        from datetime import datetime
+
+        config = self._stamp_picker.get_stamp_config()
+        if not config:
+            QMessageBox.warning(
+                self,
+                "Błąd",
+                "Wybierz lub skonfiguruj pieczątkę przed zapisaniem profilu",
+            )
+            return
+
+        name, ok = QInputDialog.getText(self, "Zapisz profil", "Nazwa profilu:")
+        if not ok or not name.strip():
+            return
+
+        # Zastosuj rotację i narożnik z UI
+        config.rotation = float(self._stamp_rotation_slider.value())
+        config.corner = self._stamp_corner_combo.currentData()
+
+        profile = StampProfile(
+            metadata=ProfileMetadata(
+                name=name.strip(),
+                profile_type=ProfileType.STAMP,
+                description=f"Pieczątka: {config.text}",
+                created_at=datetime.now().isoformat(),
+                modified_at=datetime.now().isoformat(),
+            ),
+            config=config,
+        )
+
+        pm = ProfileManager()
+        pm.save_stamp_profile(profile)
+
+        self._stamp_profile_combo.refresh()
+        QMessageBox.information(self, "Sukces", f"Profil '{name}' zapisany!")
+
+    def _load_stamp_profile(self, name: str) -> None:
+        """Ładuje profil pieczątki do kontrolek UI."""
+        pm = ProfileManager()
+        profile = pm.get_stamp_profile(name)
+        if not profile:
+            return
+
+        config = profile.config
+
+        # Ustaw rotację i narożnik w UI
+        self._stamp_rotation_slider.setValue(int(config.rotation))
+        self._stamp_rotation_value.setText(f"{int(config.rotation)}°")
+
+        # Znajdź i ustaw narożnik w combo
+        for i in range(self._stamp_corner_combo.count()):
+            if self._stamp_corner_combo.itemData(i) == config.corner:
+                self._stamp_corner_combo.setCurrentIndex(i)
+                break
+
+        # Zapisz konfigurację do użycia przy dodawaniu pieczątki
+        self._loaded_stamp_config = config
 
     # === Public API ===
 

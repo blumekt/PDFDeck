@@ -18,6 +18,7 @@ from enum import Enum
 
 from pdfdeck.core.processing_profile import ProcessingProfile, ProcessingAction
 from pdfdeck.core.pdf_manager import PDFManager
+from pdfdeck.core.models import WatermarkConfig, StampConfig
 
 
 class ProcessingStatus(Enum):
@@ -218,14 +219,16 @@ class WatchFolderService:
             manager.flatten()
 
         elif action == ProcessingAction.ADD_WATERMARK:
-            if self._profile.watermark_text:
-                from pdfdeck.core.models import WatermarkConfig
-                config = WatermarkConfig(
-                    text=self._profile.watermark_text,
-                    opacity=self._profile.watermark_opacity,
-                    rotation=self._profile.watermark_rotation,
-                )
+            config = self._get_watermark_config()
+            if config:
                 manager.add_watermark(config)
+
+        elif action == ProcessingAction.ADD_STAMP:
+            config = self._get_stamp_config()
+            if config:
+                # Dodaj pieczątkę do wszystkich stron
+                for page_idx in range(manager.page_count):
+                    manager.add_stamp(page_idx, config)
 
         elif action == ProcessingAction.ADD_BATES:
             # Bates wymaga osobnego przetwarzania, pomijamy w batch
@@ -234,6 +237,37 @@ class WatchFolderService:
         elif action == ProcessingAction.CONVERT_PDFA:
             # PDF/A konwersja wymaga osobnego przetwarzania
             pass
+
+    def _get_watermark_config(self) -> Optional[WatermarkConfig]:
+        """Pobiera WatermarkConfig z profilu lub referencji."""
+        # Najpierw sprawdź czy jest zapisany profil
+        if self._profile.watermark_profile_name:
+            from pdfdeck.core.profile_manager import ProfileManager
+            pm = ProfileManager()
+            wp = pm.get_watermark_profile(self._profile.watermark_profile_name)
+            if wp:
+                return wp.config
+
+        # Fallback do legacy parametrów
+        if self._profile.watermark_text:
+            return WatermarkConfig(
+                text=self._profile.watermark_text,
+                opacity=self._profile.watermark_opacity,
+                rotation=self._profile.watermark_rotation,
+            )
+
+        return None
+
+    def _get_stamp_config(self) -> Optional[StampConfig]:
+        """Pobiera StampConfig z profilu."""
+        if self._profile.stamp_profile_name:
+            from pdfdeck.core.profile_manager import ProfileManager
+            pm = ProfileManager()
+            sp = pm.get_stamp_profile(self._profile.stamp_profile_name)
+            if sp:
+                return sp.config
+
+        return None
 
     def _add_log_entry(
         self,

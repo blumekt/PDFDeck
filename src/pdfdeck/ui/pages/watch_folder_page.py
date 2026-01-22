@@ -22,10 +22,12 @@ from PyQt6.QtGui import QColor
 
 from pdfdeck.ui.pages.base_page import BasePage
 from pdfdeck.ui.widgets.styled_button import StyledButton
+from pdfdeck.ui.widgets.profile_combo import ProfileComboBox
 from pdfdeck.core.watch_folder import WatchFolderService, ProcessingStatus
 from pdfdeck.core.processing_profile import (
     ProcessingProfile, PRESET_PROFILES, ProcessingAction
 )
+from pdfdeck.core.profile_manager import ProfileManager, ProfileType
 
 
 class WatchFolderPage(BasePage):
@@ -178,6 +180,36 @@ class WatchFolderPage(BasePage):
 
         profile_row.addStretch()
         config_layout.addLayout(profile_row)
+
+        # Profil znaku wodnego
+        watermark_row = QHBoxLayout()
+        watermark_row.setSpacing(10)
+        watermark_label = QLabel("Znak wodny:")
+        watermark_label.setStyleSheet("color: #8892a0;")
+        watermark_label.setFixedWidth(130)
+        watermark_row.addWidget(watermark_label)
+
+        self._watermark_profile_combo = ProfileComboBox(ProfileType.WATERMARK)
+        self._watermark_profile_combo.set_save_button_visible(False)
+        self._watermark_profile_combo.set_delete_button_visible(False)
+        watermark_row.addWidget(self._watermark_profile_combo)
+        watermark_row.addStretch()
+        config_layout.addLayout(watermark_row)
+
+        # Profil pieczątki
+        stamp_row = QHBoxLayout()
+        stamp_row.setSpacing(10)
+        stamp_label = QLabel("Pieczątka:")
+        stamp_label.setStyleSheet("color: #8892a0;")
+        stamp_label.setFixedWidth(130)
+        stamp_row.addWidget(stamp_label)
+
+        self._stamp_profile_combo = ProfileComboBox(ProfileType.STAMP)
+        self._stamp_profile_combo.set_save_button_visible(False)
+        self._stamp_profile_combo.set_delete_button_visible(False)
+        stamp_row.addWidget(self._stamp_profile_combo)
+        stamp_row.addStretch()
+        config_layout.addLayout(stamp_row)
 
         content_layout.addWidget(config_group)
 
@@ -335,6 +367,7 @@ class WatchFolderPage(BasePage):
             }
         """
 
+
     def _browse_input_dir(self) -> None:
         """Wybiera folder wejściowy."""
         dir_path = QFileDialog.getExistingDirectory(
@@ -368,6 +401,7 @@ class WatchFolderPage(BasePage):
             ProcessingAction.NORMALIZE_A4: "Normalizacja do A4",
             ProcessingAction.COMPRESS: "Kompresja",
             ProcessingAction.ADD_WATERMARK: "Znak wodny",
+            ProcessingAction.ADD_STAMP: "Pieczątka",
             ProcessingAction.ADD_BATES: "Numeracja Bates",
             ProcessingAction.SCRUB_METADATA: "Usunięcie metadanych",
             ProcessingAction.FLATTEN: "Spłaszczenie",
@@ -426,7 +460,37 @@ class WatchFolderPage(BasePage):
             )
             return
 
-        profile = PRESET_PROFILES[profile_key]
+        base_profile = PRESET_PROFILES[profile_key]
+
+        # Pobierz wybrane profile watermark i stamp
+        watermark_profile_name = self._watermark_profile_combo.get_selected_profile_name()
+        stamp_profile_name = self._stamp_profile_combo.get_selected_profile_name()
+
+        # Utwórz zmodyfikowany profil z referencjami do profili
+        actions = list(base_profile.actions)
+
+        # Dodaj akcje jeśli wybrano profile
+        if watermark_profile_name and ProcessingAction.ADD_WATERMARK not in actions:
+            actions.append(ProcessingAction.ADD_WATERMARK)
+        if stamp_profile_name and ProcessingAction.ADD_STAMP not in actions:
+            actions.append(ProcessingAction.ADD_STAMP)
+
+        profile = ProcessingProfile(
+            name=base_profile.name,
+            actions=actions,
+            watermark_profile_name=watermark_profile_name,
+            stamp_profile_name=stamp_profile_name,
+            watermark_text=base_profile.watermark_text,
+            watermark_opacity=base_profile.watermark_opacity,
+            watermark_rotation=base_profile.watermark_rotation,
+            bates_prefix=base_profile.bates_prefix,
+            bates_suffix=base_profile.bates_suffix,
+            bates_start=base_profile.bates_start,
+            bates_digits=base_profile.bates_digits,
+            pdfa_level=base_profile.pdfa_level,
+            output_format=base_profile.output_format,
+            output_suffix=base_profile.output_suffix,
+        )
 
         # Uruchom serwis
         success = self._service.start(
@@ -518,6 +582,14 @@ class WatchFolderPage(BasePage):
     def on_document_loaded(self) -> None:
         """Wywoływane po załadowaniu dokumentu."""
         pass
+
+    def showEvent(self, event) -> None:
+        """Wywoływane gdy strona staje się widoczna - odświeżamy profile."""
+        super().showEvent(event)
+
+        # Odśwież oba comboboxy aby załadować nowo zapisane profile
+        self._watermark_profile_combo.refresh()
+        self._stamp_profile_combo.refresh()
 
     def closeEvent(self, event) -> None:
         """Obsługa zamykania."""

@@ -16,6 +16,7 @@ class ProcessingAction(Enum):
     NORMALIZE_A4 = "normalize_a4"
     COMPRESS = "compress"
     ADD_WATERMARK = "add_watermark"
+    ADD_STAMP = "add_stamp"
     ADD_BATES = "add_bates"
     SCRUB_METADATA = "scrub_metadata"
     FLATTEN = "flatten"
@@ -32,7 +33,11 @@ class ProcessingProfile:
     name: str
     actions: List[ProcessingAction] = field(default_factory=list)
 
-    # Parametry dla poszczególnych akcji
+    # Referencje do zapisanych profili (nowe)
+    watermark_profile_name: Optional[str] = None
+    stamp_profile_name: Optional[str] = None
+
+    # Parametry dla poszczególnych akcji (legacy - dla kompatybilności)
     watermark_text: Optional[str] = None
     watermark_opacity: float = 0.3
     watermark_rotation: int = 45
@@ -53,6 +58,8 @@ class ProcessingProfile:
         return {
             "name": self.name,
             "actions": [a.value for a in self.actions],
+            "watermark_profile_name": self.watermark_profile_name,
+            "stamp_profile_name": self.stamp_profile_name,
             "watermark_text": self.watermark_text,
             "watermark_opacity": self.watermark_opacity,
             "watermark_rotation": self.watermark_rotation,
@@ -72,6 +79,8 @@ class ProcessingProfile:
         return cls(
             name=data.get("name", "Unnamed"),
             actions=actions,
+            watermark_profile_name=data.get("watermark_profile_name"),
+            stamp_profile_name=data.get("stamp_profile_name"),
             watermark_text=data.get("watermark_text"),
             watermark_opacity=data.get("watermark_opacity", 0.3),
             watermark_rotation=data.get("watermark_rotation", 45),

@@ -12,6 +12,7 @@ from pdfdeck.ui.widgets.interactive_page_preview import (
     InteractivePagePreview,
     PageGraphicsView,
 )
+from pdfdeck.ui.widgets.profile_combo import ProfileComboBox
 
 __all__ = [
     "StyledButton",
@@ -26,4 +27,5 @@ __all__ = [
     "DiffViewer",
     "InteractivePagePreview",
     "PageGraphicsView",
+    "ProfileComboBox",
 ]

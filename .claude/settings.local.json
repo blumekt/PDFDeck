@@ -1,37 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir \"c:\\\\Users\\\\tomas\\\\Cursor project\\\\PDFDeck\")",
-      "Bash(dir:*)",
-      "Bash(tree:*)",
-      "Bash(pip install:*)",
-      "Bash(python -c:*)",
-      "Bash(python -m pdfdeck:*)",
-      "Bash(timeout:*)",
-      "Bash(start python -m pdfdeck)",
-      "Bash(find:*)",
-      "Bash(python -m ruff check:*)",
-      "Bash(python scripts/release.py:*)",
-      "Bash(git remote add:*)",
-      "Bash(git init:*)",
-      "Bash(gh repo view:*)",
-      "Bash(gh repo create:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git branch:*)",
-      "Bash(git push:*)",
-      "Bash(gh auth refresh:*)",
-      "Bash(python -m mypy:*)",
-      "Bash(git pull:*)",
-      "Bash(git stash:*)",
-      "Bash(python scripts/setup_updater.py:*)",
-      "Bash(python scripts/setup_installer.py:*)",
-      "Bash(python:*)",
-      "Bash(exit 0)",
-      "Bash(ruff check:*)",
-      "Bash(mypy:*)",
-      "Bash(gh api:*)",
-      "Bash(start pythonw -m pdfdeck)"
+      "Bash(ping:*)",
+      "Bash(grep:*)",
+      "Bash(findstr:*)",
+      "Bash(git add:*)"
     ]
   }
 }
