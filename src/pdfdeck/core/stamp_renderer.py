@@ -27,7 +27,7 @@ from pdfdeck.core.models import (
 class StampRenderer:
     """Renderer dynamicznych pieczątek."""
 
-    DPI = 150  # Rozdzielczość dla PNG (kompromis jakość/rozmiar)
+    DPI = 300  # Zwiększone z 150 do 300 dla lepszej jakości (jak znaki wodne)
     FONT_FAMILY = "Arial"
 
     def __init__(self):

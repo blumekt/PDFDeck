@@ -29,6 +29,16 @@ from pdfdeck.core.models import (
 from pdfdeck.core.stamp_renderer import StampRenderer
 
 
+# Stałe bazowe wymiary dla pieczątek (w punktach PDF)
+# Te wymiary są używane podczas renderowania - slider rozmiaru kontroluje tylko scale
+BASE_STAMP_WIDTH = 200.0  # Dla prostokątów i owali (szerokość)
+BASE_STAMP_HEIGHT_RECT = 100.0  # Dla prostokątów (wysokość)
+BASE_STAMP_SIZE_CIRCLE = 200.0  # Dla kół (średnica)
+BASE_STAMP_HEIGHT_OVAL = 120.0  # Dla owali (wysokość)
+BASE_FONT_SIZE = 24.0  # Bazowy rozmiar czcionki
+BASE_CIRCULAR_FONT_SIZE = 10.0  # Bazowy rozmiar czcionki okrągłej
+BASE_SIZE_SLIDER = 48  # Wartość slidera dla scale=1.0 (środek zakresu 10-200)
+
 # Predefiniowane pieczątki (tekst + kolor + opcjonalne ustawienia)
 PRESET_STAMPS = {
     # === Podstawowe ===
@@ -930,17 +940,19 @@ class StampPicker(QWidget):
 
             stamp_path, aspect_ratio = stamp_data
 
-            # Dla pieczątek z pliku używaj oryginalnych proporcji obrazka
-            # Kształt i ramka nie mają sensu dla zewnętrznych obrazków
-            # Mnożnik 4 zamiast 8 (te same co dla dynamicznych pieczątek)
+            # Dla pieczątek z pliku używaj bazowych wymiarów z zachowaniem proporcji
+            # Scale kontroluje finalna wielkość
             if aspect_ratio >= 1.0:
                 # Obraz szerszy lub kwadratowy
-                width = self._size * 4
+                width = BASE_STAMP_WIDTH
                 height = width / aspect_ratio
             else:
                 # Obraz wyższy
-                height = self._size * 4
+                height = BASE_STAMP_HEIGHT_RECT
                 width = height * aspect_ratio
+
+            # Oblicz scale z wartości slidera (BASE_SIZE_SLIDER = scale 1.0)
+            scale = self._size / BASE_SIZE_SLIDER
 
             return StampConfig(
                 text="",  # Brak tekstu, używamy obrazu
@@ -948,7 +960,7 @@ class StampPicker(QWidget):
                 rotation=float(self._rotation),
                 rotation_random=False,
                 corner="center",
-                scale=1.0,
+                scale=scale,
                 shape=StampShape.RECTANGLE,  # Zawsze prostokąt dla plików
                 border_style=BorderStyle.SOLID,  # Nie ma znaczenia
                 border_width=0.0,  # Brak ramki dla obrazów
@@ -961,8 +973,8 @@ class StampPicker(QWidget):
                 auto_date=False,  # Nie ma sensu dla obrazów
                 width=width,
                 height=height,
-                font_size=self._size * 0.6,
-                circular_font_size=self._size * 0.25,
+                font_size=BASE_FONT_SIZE,
+                circular_font_size=BASE_CIRCULAR_FONT_SIZE,
                 stamp_path=stamp_path,  # KLUCZ: ścieżka do pliku
             )
 
@@ -992,9 +1004,19 @@ class StampPicker(QWidget):
         shape = SHAPE_MAP.get(shape_str, StampShape.RECTANGLE)
         border_style = BORDER_STYLE_MAP.get(border_str, BorderStyle.SOLID)
 
-        # Oblicz rozmiary
-        width = self._size * 4  # Skalowanie dla czytelności
-        height = self._size * 2 if shape != StampShape.CIRCLE else self._size * 4
+        # Użyj stałych bazowych wymiarów (scale kontroluje wielkość)
+        if shape == StampShape.CIRCLE:
+            width = BASE_STAMP_SIZE_CIRCLE
+            height = BASE_STAMP_SIZE_CIRCLE
+        elif shape == StampShape.OVAL:
+            width = BASE_STAMP_WIDTH
+            height = BASE_STAMP_HEIGHT_OVAL
+        else:  # RECTANGLE
+            width = BASE_STAMP_WIDTH
+            height = BASE_STAMP_HEIGHT_RECT
+
+        # Oblicz scale z wartości slidera (BASE_SIZE_SLIDER = scale 1.0)
+        scale = self._size / BASE_SIZE_SLIDER
 
         return StampConfig(
             text=text,
@@ -1003,7 +1025,7 @@ class StampPicker(QWidget):
             rotation=float(self._rotation),
             rotation_random=False,  # Nie losowa - dokładna rotacja
             corner="center",  # Narożnik ustawiany w watermark_page.py
-            scale=1.0,
+            scale=scale,
             shape=shape,
             border_style=border_style,
             border_width=2.0,
@@ -1016,8 +1038,8 @@ class StampPicker(QWidget):
             auto_date=self._auto_date,
             width=width,
             height=height,
-            font_size=self._size * 0.6,
-            circular_font_size=self._size * 0.25,
+            font_size=BASE_FONT_SIZE,
+            circular_font_size=BASE_CIRCULAR_FONT_SIZE,
         )
 
     def _update_preview(self) -> None:
@@ -1029,3 +1051,24 @@ class StampPicker(QWidget):
     def get_stamp_config(self) -> Optional[StampConfig]:
         """Zwraca aktualną konfigurację pieczątki."""
         return self._build_config()
+
+    def clear_selection(self) -> None:
+        """Odznacza wybraną pieczątkę i resetuje ustawienia."""
+        # Odznacz element na liście
+        self._stamps_list.clearSelection()
+        self._stamps_list.setCurrentRow(-1)
+
+        # Resetuj zmienne
+        self._selected_stamp = None
+        self._custom_text = ""
+        self._circular_text = ""
+
+        # Ukryj panel własnej pieczątki
+        if hasattr(self, '_custom_group'):
+            self._custom_group.setVisible(False)
+
+        # Wyczyść pola tekstowe
+        if hasattr(self, '_custom_text_input'):
+            self._custom_text_input.clear()
+        if hasattr(self, '_circular_text_input'):
+            self._circular_text_input.clear()

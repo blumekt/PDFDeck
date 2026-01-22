@@ -270,10 +270,15 @@ class WatermarkPage(BasePage):
         corner_row.addStretch()
         stamp_layout.addLayout(corner_row)
 
-        # Przycisk dodaj
+        # Przyciski akcji
+        stamp_buttons_row = QHBoxLayout()
+        stamp_buttons_row.setSpacing(10)
+
         self._add_stamp_btn = StyledButton("Dodaj pieczątkę", "primary")
         self._add_stamp_btn.clicked.connect(self._on_add_stamp)
-        stamp_layout.addWidget(self._add_stamp_btn)
+        stamp_buttons_row.addWidget(self._add_stamp_btn)
+
+        stamp_layout.addLayout(stamp_buttons_row)
 
         config_layout.addWidget(stamp_group)
 
@@ -389,36 +394,12 @@ class WatermarkPage(BasePage):
             return
 
         try:
-            # Nadpisz rozmiar wartością z lokalnego slidera (dla spójności UI)
+            # Nadpisz scale wartością z lokalnego slidera (NIE modyfikuj width/height/font_size)
+            from pdfdeck.ui.widgets.stamp_picker import BASE_SIZE_SLIDER
             size = self._stamp_size_slider.value()
+            config.scale = size / BASE_SIZE_SLIDER
 
-            # Dla pieczątek z pliku zachowaj oryginalne proporcje obrazka
-            # Mnożnik 4 (taki sam jak dla dynamicznych pieczątek)
-            if config.stamp_path:
-                # Wczytaj aspect ratio z pliku
-                try:
-                    from PIL import Image
-                    img = Image.open(config.stamp_path)
-                    aspect_ratio = img.width / img.height
-                    img.close()
-                except Exception:
-                    aspect_ratio = 1.0  # Fallback na kwadrat
-
-                if aspect_ratio >= 1.0:
-                    config.width = size * 4
-                    config.height = config.width / aspect_ratio
-                else:
-                    config.height = size * 4
-                    config.width = config.height * aspect_ratio
-            else:
-                from pdfdeck.core.models import StampShape
-                config.width = size * 4
-                config.height = size * 2 if config.shape != StampShape.CIRCLE else size * 4
-
-            config.font_size = size * 0.6
-            config.circular_font_size = size * 0.25
-
-            # Użyj renderera do wygenerowania pieczątki
+            # Użyj renderera do wygenerowania pieczątki (w bazowych wymiarach)
             renderer = StampRenderer()
             png_data = renderer.render_to_png(config)
 
@@ -436,14 +417,23 @@ class WatermarkPage(BasePage):
                 self._stamp_preview_scene.setSceneRect(self._stamp_preview_scene.itemsBoundingRect())
                 return
 
-            # Skaluj do rozsądnego rozmiaru dla podglądu (max 300px)
-            max_size = 300
-            if pixmap.width() > max_size or pixmap.height() > max_size:
-                pixmap = pixmap.scaled(
-                    max_size, max_size,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation
-                )
+            # Skaluj pixmap do podglądu zachowując proporcje względem config.scale
+            # Bazowy rozmiar dla podglądu: 200px przy scale=1.0
+            # To pozwala zobaczyć różnice w rozmiarze gdy slider się zmienia
+            base_preview_size = 200
+            target_size = int(base_preview_size * config.scale)
+
+            # Cap do maksymalnie 600px (dla bardzo dużych wartości slidera)
+            max_size = 600
+            if target_size > max_size:
+                target_size = max_size
+
+            # Przeskaluj pixmap proporcjonalnie do target_size
+            pixmap = pixmap.scaled(
+                target_size, target_size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
 
             # Dodaj do sceny
             pixmap_item = self._stamp_preview_scene.addPixmap(pixmap)
@@ -500,46 +490,18 @@ class WatermarkPage(BasePage):
                 )
                 return
 
-        # ZAWSZE zastosuj rotację i narożnik z UI (użytkownik mógł je zmienić)
+        # ZAWSZE zastosuj rotację, narożnik i scale z UI (użytkownik mógł je zmienić)
         config.rotation = float(self._stamp_rotation_slider.value())
         config.corner = self._stamp_corner_combo.currentData()
 
-        # Zaktualizuj rozmiar z slidera (dla spójności z podglądem)
+        # Zaktualizuj scale z slidera (NIE modyfikuj width/height/font_size - te są bazowe)
+        from pdfdeck.ui.widgets.stamp_picker import BASE_SIZE_SLIDER
         size = self._stamp_size_slider.value()
-        if config.stamp_path:
-            # Dla zewnętrznych plików zachowaj oryginalne proporcje
-            try:
-                from PIL import Image
-                img = Image.open(config.stamp_path)
-                aspect_ratio = img.width / img.height
-                img.close()
-            except Exception:
-                aspect_ratio = 1.0
-
-            if aspect_ratio >= 1.0:
-                config.width = size * 4
-                config.height = config.width / aspect_ratio
-            else:
-                config.height = size * 4
-                config.width = config.height * aspect_ratio
-        else:
-            from pdfdeck.core.models import StampShape
-            config.width = size * 4
-            config.height = size * 2 if config.shape != StampShape.CIRCLE else size * 4
-        config.font_size = size * 0.6
-        config.circular_font_size = size * 0.25
+        config.scale = size / BASE_SIZE_SLIDER
 
         try:
-            # Dodaj do aktualnej strony (index 0)
-            # TODO: pozwól użytkownikowi wybrać stronę i pozycję
+            # Dodaj pieczątkę (automatycznie cofa poprzednią jeśli była)
             self._pdf_manager.add_stamp(0, config)
-
-            QMessageBox.information(
-                self,
-                "Sukces",
-                "Pieczątka została dodana do strony.\n"
-                "Pamiętaj o zapisaniu dokumentu."
-            )
 
         except Exception as e:
             QMessageBox.critical(
@@ -701,10 +663,15 @@ class WatermarkPage(BasePage):
         overlay_row.addStretch()
         watermark_layout.addLayout(overlay_row)
 
-        # Przycisk dodaj
+        # Przyciski akcji
+        buttons_row = QHBoxLayout()
+        buttons_row.setSpacing(10)
+
         self._add_watermark_btn = StyledButton("Dodaj znak wodny", "primary")
         self._add_watermark_btn.clicked.connect(self._on_add_watermark)
-        watermark_layout.addWidget(self._add_watermark_btn)
+        buttons_row.addWidget(self._add_watermark_btn)
+
+        watermark_layout.addLayout(buttons_row)
 
         config_layout.addWidget(watermark_group)
 
@@ -942,14 +909,8 @@ class WatermarkPage(BasePage):
                 overlay=self._overlay_combo.currentData(),
             )
 
+            # Dodaj znak wodny (automatycznie cofa poprzedni jeśli był)
             self._pdf_manager.add_watermark(config)
-
-            QMessageBox.information(
-                self,
-                "Sukces",
-                "Znak wodny został dodany do wszystkich stron.\n"
-                "Pamiętaj o zapisaniu dokumentu."
-            )
 
         except Exception as e:
             QMessageBox.critical(
@@ -1068,15 +1029,15 @@ class WatermarkPage(BasePage):
                 aspect_ratio = 1.0
 
             if aspect_ratio >= 1.0:
-                config.width = size * 4
+                config.width = size * 8
                 config.height = config.width / aspect_ratio
             else:
-                config.height = size * 4
+                config.height = size * 8
                 config.width = config.height * aspect_ratio
         else:
             from pdfdeck.core.models import StampShape
-            config.width = size * 4
-            config.height = size * 2 if config.shape != StampShape.CIRCLE else size * 4
+            config.width = size * 8
+            config.height = size * 4 if config.shape != StampShape.CIRCLE else size * 8
         config.font_size = size * 0.6
         config.circular_font_size = size * 0.25
 
@@ -1133,8 +1094,8 @@ class WatermarkPage(BasePage):
             else:
                 size = int(config.height / 8)
         else:
-            # Dla zwykłych: width = size * 4
-            size = int(config.width / 4)
+            # Dla zwykłych: width = size * 8
+            size = int(config.width / 8)
 
         # Ogranicz rozmiar do zakresu slidera (24-120)
         size = max(24, min(120, size))
@@ -1157,6 +1118,42 @@ class WatermarkPage(BasePage):
         self._loaded_stamp_config = config
 
         # Aktualizuj podgląd z załadowaną konfiguracją
+        self._update_stamp_preview()
+
+    def _clear_watermark_settings(self) -> None:
+        """Resetuje ustawienia znaku wodnego do wartości domyślnych."""
+        # Resetuj kontrolki do wartości domyślnych
+        self._watermark_text.clear()
+        self._font_size.setValue(72)
+        self._rotation.setValue(-45)
+        self._color_btn.color = QColor(128, 128, 128)
+        self._opacity_slider.setValue(30)
+        self._overlay_combo.setCurrentIndex(1)  # "Nad tekstem"
+
+        # Resetuj profil do "(brak profilu)"
+        self._watermark_profile_combo._combo.setCurrentIndex(0)
+
+        # Aktualizuj podgląd
+        self._update_preview()
+
+    def _clear_stamp_settings(self) -> None:
+        """Resetuje ustawienia pieczątki do wartości domyślnych."""
+        # Resetuj slidery i combo
+        self._stamp_rotation_slider.setValue(0)
+        self._stamp_size_slider.setValue(48)
+        self._stamp_corner_combo.setCurrentIndex(0)  # "Środek"
+
+        # Resetuj profil do "(brak profilu)"
+        self._stamp_profile_combo._combo.setCurrentIndex(0)
+
+        # Wyczyść załadowaną konfigurację
+        self._loaded_stamp_config = None
+        self._selected_stamp_config = None
+
+        # Odznacz wszystkie pieczątki w pickerze
+        self._stamp_picker.clear_selection()
+
+        # Odśwież podgląd (wyświetli "Wybierz pieczątkę z listy")
         self._update_stamp_preview()
 
     # === Public API ===

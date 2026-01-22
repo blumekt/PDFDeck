@@ -47,6 +47,10 @@ class PDFManager:
         self._doc: Optional[pymupdf.Document] = None
         self._filepath: Optional[Path] = None
         self._modified: bool = False
+        self._stamp_snapshot: Optional[bytes] = None  # Snapshot przed dodaniem pieczątki
+        self._watermark_snapshot: Optional[bytes] = None  # Snapshot przed dodaniem znaku wodnego
+        self._has_stamp: bool = False  # Czy pieczątka została dodana
+        self._has_watermark: bool = False  # Czy znak wodny został dodany
 
     # === Właściwości ===
 
@@ -784,31 +788,64 @@ class PDFManager:
         if not self._doc:
             raise ValueError("Brak załadowanego dokumentu")
 
+        # Jeśli poprzedni znak wodny był dodany, cofnij go
+        if self._has_watermark and self._watermark_snapshot:
+            self._doc = pymupdf.open("pdf", self._watermark_snapshot)
+            self._has_watermark = False
+
+        # Zapisz snapshot PRZED dodaniem nowego znaku
+        self._watermark_snapshot = self._doc.tobytes()
+
+        # Aktualizuj też stamp snapshot jeśli pieczątka była dodana
+        if self._has_stamp:
+            self._stamp_snapshot = self._doc.tobytes()
+
         target_pages = pages if pages else range(self.page_count)
 
         # Renderuj tekst znaku wodnego jako PNG z przezroczystością
         # Rotacja jest już wliczona w renderowaniu
         watermark_image = self._render_watermark_image(config)
 
+        # Pobierz rzeczywiste wymiary wyrenderowanego obrazu
+        from PIL import Image
+        import io
+        img = Image.open(io.BytesIO(watermark_image))
+        img_width, img_height = img.size
+        img.close()
+
+        # Konwersja wymiarów obrazu z pikseli (300 DPI) na punkty PDF (72 DPI)
+        # 1 punkt PDF = 300/72 pikseli przy renderowaniu w 300 DPI
+        pixels_per_point = 300 / 72
+        current_width_pt = img_width / pixels_per_point
+        current_height_pt = img_height / pixels_per_point
+
+        # Oblicz docelowy rozmiar bazując bezpośrednio na font_size
+        # Mnożnik 8 daje dobrą proporcję dla czytelności
+        # font_size=12 → szerokość ~96pt (mały znak wodny)
+        # font_size=72 → szerokość ~576pt (duży znak wodny)
+        target_width_pt = config.font_size * 8
+
+        # Współczynnik skalowania
+        scale_factor = target_width_pt / current_width_pt
+
         for page_idx in target_pages:
             page = self._doc[page_idx]
             rect = page.rect
-
-            # Oblicz rozmiar obrazu znaku wodnego dla strony
-            # Skaluj tak, aby był czytelny ale nie dominował
-            page_diag = (rect.width**2 + rect.height**2) ** 0.5
-            watermark_width = page_diag * 0.8  # 80% przekątnej strony
 
             # Środek strony
             center_x = rect.width / 2
             center_y = rect.height / 2
 
+            # Oblicz finalne wymiary w punktach PDF
+            watermark_width = current_width_pt * scale_factor
+            watermark_height = current_height_pt * scale_factor
+
             # Wstaw obraz
             watermark_rect = pymupdf.Rect(
                 center_x - watermark_width / 2,
-                center_y - watermark_width / 2,
+                center_y - watermark_height / 2,
                 center_x + watermark_width / 2,
-                center_y + watermark_width / 2,
+                center_y + watermark_height / 2,
             )
 
             page.insert_image(
@@ -817,6 +854,7 @@ class PDFManager:
                 overlay=True,  # Zawsze ponad zawartością
             )
 
+        self._has_watermark = True
         self._modified = True
 
     def _render_watermark_image(self, config: WatermarkConfig) -> bytes:
@@ -830,9 +868,11 @@ class PDFManager:
         import io
 
         # Parametry obrazu
-        dpi = 150
+        # Wysoki DPI dla ostrego renderowania przy skalowaniu
+        # Im wyższy DPI, tym lepsza jakość ale większy rozmiar pliku
+        dpi = 300  # Zwiększone z 150 do 300 dla lepszej jakości
         font_size = int(config.font_size * dpi / 72)  # Konwersja z punktów na piksele
-        margin = 40  # Większy margines dla rotacji
+        margin = 80  # Większy margines dla rotacji (skalowany proporcjonalnie do DPI)
 
         # Utwórz tymczasowy obraz aby zmierzyć tekst
         temp_img = Image.new("RGBA", (100, 100), (0, 0, 0, 0))
@@ -895,11 +935,56 @@ class PDFManager:
         if not self._doc:
             raise ValueError("Brak załadowanego dokumentu")
 
+        # Jeśli poprzednia pieczątka była dodana, cofnij ją
+        if self._has_stamp and self._stamp_snapshot:
+            self._doc = pymupdf.open("pdf", self._stamp_snapshot)
+            self._has_stamp = False
+
+        # Zapisz snapshot PRZED dodaniem nowej pieczątki
+        self._stamp_snapshot = self._doc.tobytes()
+
+        # Aktualizuj też watermark snapshot jeśli znak był dodany
+        if self._has_watermark:
+            self._watermark_snapshot = self._doc.tobytes()
+
         page = self._doc[page_index]
 
-        # Oblicz rozmiar pieczątki
-        width = config.width * config.scale
-        height = config.height * config.scale
+        # Dla dynamicznie generowanych pieczątek (bez stamp_path),
+        # wyrenderuj najpierw żeby poznać rzeczywiste wymiary
+        png_data_temp = None  # Inicjalizuj
+        if not config.stamp_path:
+            from PIL import Image
+            import io
+
+            renderer = StampRenderer()
+            png_data_temp = renderer.render_to_png(config)
+
+            # Pobierz wymiary PRZED rotacją (to są bazowe wymiary pieczątki)
+            img = Image.open(io.BytesIO(png_data_temp))
+            img_width_px, img_height_px = img.size
+            img.close()
+
+            # Konwersja wymiarów z pikseli (300 DPI) na punkty PDF (72 DPI)
+            pixels_per_point = 300 / 72
+            current_width_pt = img_width_px / pixels_per_point
+            current_height_pt = img_height_px / pixels_per_point
+
+            # Skaluj wyrenderowany obraz przez config.scale (z slidera)
+            # config.width/height/font_size są bazowe (stałe), scale kontroluje wielkość
+            width = current_width_pt * config.scale
+            height = current_height_pt * config.scale
+
+            # Teraz zastosuj rotację do PNG (po pobraniu wymiarów)
+            if config.rotation != 0:
+                img = Image.open(io.BytesIO(png_data_temp))
+                img = img.rotate(config.rotation, expand=True, resample=Image.Resampling.BICUBIC)
+                buffer = io.BytesIO()
+                img.save(buffer, format="PNG")
+                png_data_temp = buffer.getvalue()
+        else:
+            # Dla pieczątek z pliku użyj config.width/height
+            width = config.width * config.scale
+            height = config.height * config.scale
 
         # Dla okrągłych pieczątek użyj kwadratu
         if config.shape == StampShape.CIRCLE:
@@ -981,26 +1066,11 @@ class PDFManager:
                     rotate=int(rotation_angle),
                 )
         else:
-            # Dynamiczne generowanie - zawsze PNG
-            renderer = StampRenderer()
-            png_data = renderer.render_to_png(config)
+            # Dynamiczne generowanie - użyj już wyrenderowanego i obrócone PNG z początku funkcji
+            png_data = png_data_temp
 
-            # Obsłuż rotację za pomocą PIL jeśli jest inna niż 0, 90, 180, 270
-            if config.rotation not in (0, 90, 180, 270):
-                from PIL import Image
-                import io
-                
-                # Wczytaj obraz
-                img = Image.open(io.BytesIO(png_data))
-                # Obróć obraz
-                img = img.rotate(config.rotation, expand=True, resample=Image.Resampling.BICUBIC)
-                # Konwertuj z powrotem na bytes
-                buffer = io.BytesIO()
-                img.save(buffer, format="PNG")
-                png_data = buffer.getvalue()
-                rotation = 0  # Już obrócony przez PIL
-            else:
-                rotation = int(config.rotation) % 360
+            # Rotacja już zastosowana w PNG wcześniej
+            rotation = 0
 
             # Zapisz do tymczasowego pliku (PyMuPDF lepiej obsługuje pliki)
             import tempfile
@@ -1018,7 +1088,9 @@ class PDFManager:
             finally:
                 os.unlink(tmp_path)
 
+        self._has_stamp = True
         self._modified = True
+
 
     # === Formatowanie ===
 
