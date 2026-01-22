@@ -2,8 +2,8 @@
 ; https://jrsoftware.org/isinfo.php
 
 #define MyAppName "PDFDeck"
-#define MyAppVersion "2.0.4"
-#define MyAppNumericVersion "2.0.4.0"
+#define MyAppVersion "3.0.0"
+#define MyAppNumericVersion "3.0.0.0"
 #define MyAppPublisher "PDFDeck Team"
 #define MyAppURL "https://github.com/blumekt/PDFDeck"
 #define MyAppExeName "PDFDeck.exe"
