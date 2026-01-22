@@ -4,11 +4,12 @@ LinkManagerDialog - Dialog do zarządzania linkami na stronie.
 Funkcje:
 - Wyświetlanie listy linków
 - Dodawanie nowych linków
+- Dodawanie linków z wyszukiwania tekstu
 - Edycja istniejących linków
 - Usuwanie linków
 """
 
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, TYPE_CHECKING
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
@@ -20,6 +21,9 @@ from PyQt6.QtCore import Qt
 from pdfdeck.core.models import LinkInfo, LinkConfig, Rect
 from pdfdeck.ui.widgets.styled_button import StyledButton
 from pdfdeck.ui.dialogs.link_dialog import LinkDialog
+
+if TYPE_CHECKING:
+    from pdfdeck.core.pdf_manager import PDFManager
 
 
 class LinkManagerDialog(QDialog):
@@ -42,6 +46,7 @@ class LinkManagerDialog(QDialog):
         on_edit: Callable[[int, LinkConfig], None],
         on_delete: Callable[[int], None],
         get_links: Callable[[], List[LinkInfo]],
+        pdf_manager: Optional["PDFManager"] = None,
         parent=None
     ):
         """
@@ -53,6 +58,7 @@ class LinkManagerDialog(QDialog):
             on_edit: Callback wywoływany przy edycji (link_index, new_config)
             on_delete: Callback wywoływany przy usuwaniu (link_index)
             get_links: Callback do pobierania aktualnej listy linków
+            pdf_manager: Manager PDF (opcjonalny, wymagany dla "Dodaj z tekstu")
             parent: Widget rodzic
         """
         super().__init__(parent)
@@ -64,6 +70,7 @@ class LinkManagerDialog(QDialog):
         self._on_edit = on_edit
         self._on_delete = on_delete
         self._get_links = get_links
+        self._pdf_manager = pdf_manager
 
         self.setWindowTitle(f"Zarządzanie linkami - Strona {page_index + 1}")
         self.setMinimumSize(600, 400)
@@ -230,6 +237,25 @@ class LinkManagerDialog(QDialog):
             # Odśwież listę linków
             self._refresh_links()
 
+    def _on_add_from_text_clicked(self) -> None:
+        """Obsługa kliknięcia 'Dodaj z tekstu'."""
+        if not self._pdf_manager:
+            return
+
+        from pdfdeck.ui.dialogs.text_search_link_dialog import TextSearchLinkDialog
+
+        config = TextSearchLinkDialog.get_link_from_text(
+            pdf_manager=self._pdf_manager,
+            page_index=self._page_index,
+            max_pages=self._max_pages,
+            parent=self
+        )
+
+        if config:
+            self._on_add(config)
+            # Odśwież listę linków
+            self._refresh_links()
+
     def _on_edit_clicked(self) -> None:
         """Obsługa kliknięcia 'Edytuj'."""
         selected_rows = self._table.selectionModel().selectedRows()
@@ -281,6 +307,7 @@ class LinkManagerDialog(QDialog):
         on_edit: Callable[[int, LinkConfig], None],
         on_delete: Callable[[int], None],
         get_links: Callable[[], List[LinkInfo]],
+        pdf_manager: Optional["PDFManager"] = None,
         parent=None
     ) -> None:
         """
@@ -294,6 +321,7 @@ class LinkManagerDialog(QDialog):
             on_edit: Callback dla edycji
             on_delete: Callback dla usuwania
             get_links: Callback do pobierania aktualnej listy linków
+            pdf_manager: Manager PDF (opcjonalny, wymagany dla "Dodaj z tekstu")
             parent: Widget rodzic
         """
         dialog = LinkManagerDialog(
@@ -304,6 +332,7 @@ class LinkManagerDialog(QDialog):
             on_edit=on_edit,
             on_delete=on_delete,
             get_links=get_links,
+            pdf_manager=pdf_manager,
             parent=parent
         )
         dialog.exec()

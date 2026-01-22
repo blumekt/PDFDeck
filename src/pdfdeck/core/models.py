@@ -74,6 +74,8 @@ class LinkConfig:
     target_page: Optional[int] = None  # Dla linków wewnętrznych
     target_point: Optional[Point] = None
     display_text: Optional[str] = None  # Opcjonalny tekst wyświetlany
+    add_underline: bool = True  # Czy dodać podkreślenie (adnotację)
+    add_border: bool = False  # Czy dodać ramkę wokół obszaru
 
 
 @dataclass
@@ -218,6 +220,16 @@ class RedactionMatch:
     rect: Rect
     matched_text: str
     pattern: str
+
+
+@dataclass
+class WordBounds:
+    """Granice słowa z pozycją na stronie (dla interaktywnego zaznaczania)."""
+    text: str
+    rect: Rect
+    block_no: int
+    line_no: int
+    word_no: int
 
 
 # === Analiza dokumentu ===

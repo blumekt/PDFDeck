@@ -148,11 +148,17 @@ class PagesView(BasePage):
 
         bottom_layout.addStretch()
 
-        # Przycisk "Linki"
-        self._links_btn = StyledButton("Linki", "secondary")
+        # Przycisk "Linki w stopce" - zarządzanie linkami (dodaj z tekstu, edytuj, usuń)
+        self._links_btn = StyledButton("Linki w stopce", "secondary")
         self._links_btn.setEnabled(False)
         self._links_btn.clicked.connect(self._on_manage_links)
         bottom_layout.addWidget(self._links_btn)
+
+        # Przycisk "Linki z obszaru" - interaktywne zaznaczanie obszaru
+        self._link_area_btn = StyledButton("Linki z obszaru", "secondary")
+        self._link_area_btn.setEnabled(False)
+        self._link_area_btn.clicked.connect(self._on_add_link_from_area)
+        bottom_layout.addWidget(self._link_area_btn)
 
         # Przycisk "Usuń"
         self._delete_btn = StyledButton("Usuń", "danger")
@@ -207,6 +213,7 @@ class PagesView(BasePage):
         self._selection_label.setText(f"Zaznaczono: {count} stron")
         self._delete_btn.setEnabled(count > 0)
         self._links_btn.setEnabled(page_index >= 0)
+        self._link_area_btn.setEnabled(page_index >= 0)
 
     def _on_order_changed(self, new_order: list) -> None:
         """Obsługa zmiany kolejności stron."""
@@ -352,8 +359,31 @@ class PagesView(BasePage):
             on_edit=on_edit,
             on_delete=on_delete,
             get_links=get_links,
+            pdf_manager=self._pdf_manager,
             parent=self
         )
+
+    def _on_add_link_from_area(self) -> None:
+        """Obsługa dodawania linku przez zaznaczenie obszaru."""
+        if self._selected_page is None or not self._pdf_manager.is_loaded:
+            return
+
+        from pdfdeck.ui.dialogs.select_area_link_dialog import SelectAreaLinkDialog
+
+        page_index = self._selected_page
+        max_pages = self._pdf_manager.page_count
+
+        config = SelectAreaLinkDialog.get_link_from_area(
+            pdf_manager=self._pdf_manager,
+            page_index=page_index,
+            max_pages=max_pages,
+            parent=self
+        )
+
+        if config:
+            self._pdf_manager.insert_link(page_index, config)
+            # Odśwież podgląd
+            self._on_selection_changed(page_index)
 
     def _on_save(self) -> None:
         """Obsługa zapisywania dokumentu."""

@@ -23,6 +23,7 @@ from pdfdeck.core.models import (
     StampShape,
     WearLevel,
     SearchResult,
+    WordBounds,
     DocumentMetadata,
     TableData,
     Heading,
@@ -386,6 +387,21 @@ class PDFManager:
             # Zaktualizuj rect dla linku
             rect = text_rect
 
+        # Dodaj niebieskie podkreślenie jako adnotację PDF (jeśli włączone i nie ma display_text)
+        if config.add_underline and not config.display_text:
+            annot = page.add_underline_annot(rect)
+            annot.set_colors(stroke=(0, 0, 0.8))  # Niebieski kolor
+            annot.update()
+
+        # Dodaj niebieską ramkę wokół obszaru (dla linków z zaznaczenia obszaru)
+        if config.add_border and not config.display_text:
+            page.draw_rect(
+                rect,
+                color=(0, 0, 0.8),  # Niebieski kolor
+                width=1.0,
+                fill=None  # Bez wypełnienia
+            )
+
         link_dict: Dict[str, Any] = {"from": rect}
 
         if config.uri:
@@ -620,6 +636,94 @@ class PDFManager:
                     )
 
         return results
+
+    def search_text_on_page(self, page_index: int, query: str) -> List[SearchResult]:
+        """
+        Wyszukuje tekst na konkretnej stronie.
+
+        Args:
+            page_index: Indeks strony (0-indexed)
+            query: Tekst do wyszukania
+
+        Returns:
+            Lista wyników wyszukiwania z tej strony
+        """
+        return self.search_text(query, regex=False, pages=[page_index])
+
+    def get_page_words(self, page_index: int) -> List[WordBounds]:
+        """
+        Pobiera wszystkie słowa ze strony z ich pozycjami.
+
+        Args:
+            page_index: Indeks strony (0-indexed)
+
+        Returns:
+            Lista WordBounds zawierająca słowa i ich prostokąty
+        """
+        if not self._doc:
+            raise ValueError("Brak załadowanego dokumentu")
+
+        page = self._doc[page_index]
+        words = page.get_text("words")  # (x0, y0, x1, y1, word, block_no, line_no, word_no)
+
+        result = []
+        for w in words:
+            x0, y0, x1, y1, text, block_no, line_no, word_no = w
+            result.append(
+                WordBounds(
+                    text=text,
+                    rect=Rect(x0, y0, x1, y1),
+                    block_no=int(block_no),
+                    line_no=int(line_no),
+                    word_no=int(word_no),
+                )
+            )
+        return result
+
+    def snap_rect_to_words(
+        self, page_index: int, rect: Rect, tolerance: float = 2.0
+    ) -> tuple[Rect, List[str]]:
+        """
+        Dopasowuje prostokąt do granic słów, które przecina.
+
+        Args:
+            page_index: Indeks strony
+            rect: Prostokąt do dopasowania
+            tolerance: Tolerancja w punktach PDF (tylko poziomo)
+
+        Returns:
+            Tuple (dopasowany Rect, lista zaznaczonych słów)
+        """
+        words = self.get_page_words(page_index)
+
+        # Znajdź słowa które mają znaczący overlap z prostokątem
+        intersecting_words = []
+        for word in words:
+            # Oblicz overlap w pionie - środek słowa musi być wewnątrz zaznaczenia
+            word_center_y = (word.rect.y0 + word.rect.y1) / 2
+            if not (rect.y0 <= word_center_y <= rect.y1):
+                continue
+
+            # Sprawdź overlap w poziomie (z małą tolerancją)
+            if (
+                word.rect.x0 <= rect.x1 + tolerance
+                and word.rect.x1 >= rect.x0 - tolerance
+            ):
+                intersecting_words.append(word)
+
+        if not intersecting_words:
+            return rect, []
+
+        # Oblicz bounding box wszystkich przecinających się słów
+        min_x0 = min(w.rect.x0 for w in intersecting_words)
+        min_y0 = min(w.rect.y0 for w in intersecting_words)
+        max_x1 = max(w.rect.x1 for w in intersecting_words)
+        max_y1 = max(w.rect.y1 for w in intersecting_words)
+
+        snapped_rect = Rect(min_x0, min_y0, max_x1, max_y1)
+        selected_words = [w.text for w in intersecting_words]
+
+        return snapped_rect, selected_words
 
     # === Redakcja (prawdziwa) ===
 
