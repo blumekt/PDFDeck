@@ -10,7 +10,7 @@ Funkcje:
 - Okrągłe pieczątki z tekstem po obwodzie
 """
 
-from typing import Optional, Dict
+from typing import Optional, Dict, Tuple
 from io import BytesIO
 from pathlib import Path
 
@@ -299,7 +299,8 @@ class StampPicker(QWidget):
         self._auto_date: bool = False
 
         # Lista załadowanych własnych pieczątek z plików
-        self._custom_stamps: Dict[str, Path] = {}  # klucz -> ścieżka do pliku
+        # klucz -> (ścieżka do pliku, aspect_ratio)
+        self._custom_stamps: Dict[str, Tuple[Path, float]] = {}
 
         self._renderer = StampRenderer()
         self._setup_ui()
@@ -760,12 +761,22 @@ class StampPicker(QWidget):
         if not file_path:
             return  # Użytkownik anulował
 
+        # Wczytaj obrazek aby uzyskać jego proporcje
+        try:
+            from PIL import Image
+            img = Image.open(file_path)
+            aspect_ratio = img.width / img.height
+            img.close()
+        except Exception:
+            # Fallback na kwadrat jeśli nie można wczytać
+            aspect_ratio = 1.0
+
         # Utwórz klucz dla custom stamp (bazując na nazwie pliku)
         file_name = Path(file_path).stem
         key = f"custom_file_{len(self._custom_stamps)}"
 
-        # Zapisz w słowniku
-        self._custom_stamps[key] = Path(file_path)
+        # Zapisz w słowniku z aspect ratio
+        self._custom_stamps[key] = (Path(file_path), aspect_ratio)
 
         # Dodaj do listy (przed opcją "Własna pieczątka...")
         insert_index = self._stamps_list.count() - 1  # Przed ostatnim elementem
@@ -787,13 +798,22 @@ class StampPicker(QWidget):
         if key == "custom":
             self._selected_stamp = None
             self._custom_group.setVisible(True)
+            # Włącz kontrolki kształtu i ramki dla własnej pieczątki
+            self._shape_combo.setEnabled(True)
+            self._border_combo.setEnabled(True)
         elif key.startswith("custom_file_"):
-            # Pieczątka załadowana z pliku
+            # Pieczątka załadowana z pliku - wyłącz kształt i ramkę
             self._selected_stamp = key
             self._custom_group.setVisible(False)
+            # Wyłącz kontrolki kształtu i ramki dla zewnętrznych plików
+            self._shape_combo.setEnabled(False)
+            self._border_combo.setEnabled(False)
         else:
             self._selected_stamp = key
             self._custom_group.setVisible(False)
+            # Włącz kontrolki kształtu i ramki dla predefiniowanych
+            self._shape_combo.setEnabled(True)
+            self._border_combo.setEnabled(True)
 
             # Ustaw kontrolki na podstawie presetu
             stamp = PRESET_STAMPS[key]
@@ -904,12 +924,24 @@ class StampPicker(QWidget):
         """Buduje StampConfig z aktualnych ustawień."""
         # Obsługa pieczątek z plików
         if self._selected_stamp and self._selected_stamp.startswith("custom_file_"):
-            stamp_path = self._custom_stamps.get(self._selected_stamp)
-            if not stamp_path:
+            stamp_data = self._custom_stamps.get(self._selected_stamp)
+            if not stamp_data:
                 return None
 
-            # Dla pieczątek z pliku używamy uproszczonej konfiguracji
-            # Większe mnożniki dla lepszego skalowania własnych obrazów
+            stamp_path, aspect_ratio = stamp_data
+
+            # Dla pieczątek z pliku używaj oryginalnych proporcji obrazka
+            # Kształt i ramka nie mają sensu dla zewnętrznych obrazków
+            # Mnożnik 4 zamiast 8 (te same co dla dynamicznych pieczątek)
+            if aspect_ratio >= 1.0:
+                # Obraz szerszy lub kwadratowy
+                width = self._size * 4
+                height = width / aspect_ratio
+            else:
+                # Obraz wyższy
+                height = self._size * 4
+                width = height * aspect_ratio
+
             return StampConfig(
                 text="",  # Brak tekstu, używamy obrazu
                 position=Point(100, 100),
@@ -917,7 +949,7 @@ class StampPicker(QWidget):
                 rotation_random=False,
                 corner="center",
                 scale=1.0,
-                shape=StampShape.RECTANGLE,  # Nie ma znaczenia dla obrazów
+                shape=StampShape.RECTANGLE,  # Zawsze prostokąt dla plików
                 border_style=BorderStyle.SOLID,  # Nie ma znaczenia
                 border_width=0.0,  # Brak ramki dla obrazów
                 color=(0, 0, 0),  # Nie ma znaczenia
@@ -927,8 +959,8 @@ class StampPicker(QWidget):
                 double_strike=self._double_strike,
                 ink_splatter=self._ink_splatter,
                 auto_date=False,  # Nie ma sensu dla obrazów
-                width=self._size * 8,  # Podwojony mnożnik dla lepszego skalowania
-                height=self._size * 4,  # Podwojony mnożnik
+                width=width,
+                height=height,
                 font_size=self._size * 0.6,
                 circular_font_size=self._size * 0.25,
                 stamp_path=stamp_path,  # KLUCZ: ścieżka do pliku

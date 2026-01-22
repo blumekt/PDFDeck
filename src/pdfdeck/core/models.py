@@ -162,7 +162,10 @@ class StampConfig:
 
     # === Pozycja i transformacja ===
     position: Point = field(default_factory=lambda: Point(100, 100))
-    rotation: float = 0.0  # Rotacja w stopniach
+    # Rotacja w stopniach. Konwencja: dodatnie = counter-clockwise (matematyczny standard)
+    # PIL Image.rotate() używa counter-clockwise (dodatnie = w lewo)
+    # PyQt6 setRotation() używa clockwise (dodatnie = w prawo) - negujemy w podglądzie dla spójności
+    rotation: float = 0.0
     rotation_random: bool = True  # True = losowa rotacja +/- 2°, False = dokładna rotacja
     corner: str = "center"  # Narożnik: top-left, top-center, top-right, center, bottom-left, bottom-center, bottom-right
     scale: float = 1.0

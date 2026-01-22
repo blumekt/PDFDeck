@@ -27,6 +27,24 @@ pdfdeck
 pip install -e ".[dev]"
 ```
 
+## Recent Changes
+
+### 2025-01-22: Fix responsywności slidera rozmiaru dla pieczątek z pliku
+
+- **Problem:** Slider rozmiaru nie działał responsywnie - zmiany były praktycznie niewidoczne
+- **Root cause:** Zbyt duży mnożnik `size * 8` (domyślnie 48pt * 8 = 384pt = 13.5cm)
+- **Fix:** Zmniejszenie mnożnika z 8 do 4 we wszystkich miejscach ([stamp_picker.py:916](src/pdfdeck/ui/widgets/stamp_picker.py#L916), [watermark_page.py:408,520,1071](src/pdfdeck/ui/pages/watermark_page.py#L408))
+- **Rezultat:** Spójność z dynamicznymi pieczątkami (również `size * 4`) i bardziej responsywny slider
+- **Backward compatibility:** Istniejące profile zachowają zapisane wymiary (width/height), więc zmiana nie wpłynie na załadowane profile
+
+### 2025-01-22: Fix rotacji pieczątek i znaków wodnych
+
+- **Problem:** Podgląd (PyQt6) i PDF (PIL) pokazywały rotację w przeciwnych kierunkach
+- **Root cause:** PyQt6 `setRotation()` używa clockwise, a PIL `Image.rotate()` używa counter-clockwise
+- **Fix:** Negacja rotacji w podglądzie PyQt6 ([watermark_page.py:443,875](src/pdfdeck/ui/pages/watermark_page.py#L443))
+- **Konwencja:** Dodatnie wartości = counter-clockwise (w lewo) - matematyczny standard PIL
+- **Backward compatibility:** Feature był nowy (2 dni), prawdopodobnie zero użytkowników dotkniętych
+
 ## Project Structure
 
 ```text

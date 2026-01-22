@@ -370,8 +370,14 @@ class WatermarkPage(BasePage):
         # Wyczyść scenę
         self._stamp_preview_scene.clear()
 
-        # Pobierz konfigurację pieczątki
-        config = self._stamp_picker.get_stamp_config()
+        # Użyj konfiguracji z profilu jeśli jest załadowana, w przeciwnym razie z pickera
+        if self._loaded_stamp_config is not None:
+            # Użyj kopii żeby nie modyfikować oryginału
+            from copy import deepcopy
+            config = deepcopy(self._loaded_stamp_config)
+        else:
+            config = self._stamp_picker.get_stamp_config()
+
         if not config:
             # Brak wybranej pieczątki - pokaż tekst
             text_item = QGraphicsTextItem("Wybierz pieczątkę\nz listy")
@@ -383,16 +389,31 @@ class WatermarkPage(BasePage):
             return
 
         try:
-            # Nadpisz rozmiar wartością z lokalnego slidera
+            # Nadpisz rozmiar wartością z lokalnego slidera (dla spójności UI)
             size = self._stamp_size_slider.value()
 
-            # Dla pieczątek z pliku używamy większych mnożników
+            # Dla pieczątek z pliku zachowaj oryginalne proporcje obrazka
+            # Mnożnik 4 (taki sam jak dla dynamicznych pieczątek)
             if config.stamp_path:
-                config.width = size * 8
-                config.height = size * 4
+                # Wczytaj aspect ratio z pliku
+                try:
+                    from PIL import Image
+                    img = Image.open(config.stamp_path)
+                    aspect_ratio = img.width / img.height
+                    img.close()
+                except Exception:
+                    aspect_ratio = 1.0  # Fallback na kwadrat
+
+                if aspect_ratio >= 1.0:
+                    config.width = size * 4
+                    config.height = config.width / aspect_ratio
+                else:
+                    config.height = size * 4
+                    config.width = config.height * aspect_ratio
             else:
+                from pdfdeck.core.models import StampShape
                 config.width = size * 4
-                config.height = size * 2 if config.shape.value != 'circle' else size * 4
+                config.height = size * 2 if config.shape != StampShape.CIRCLE else size * 4
 
             config.font_size = size * 0.6
             config.circular_font_size = size * 0.25
@@ -431,7 +452,8 @@ class WatermarkPage(BasePage):
             rotation = self._stamp_rotation_slider.value()
             rect = pixmap_item.boundingRect()
             pixmap_item.setTransformOriginPoint(rect.center())
-            pixmap_item.setRotation(rotation)
+            # Neguj rotację bo PyQt6 używa clockwise, a PIL (w PDF) używa counter-clockwise
+            pixmap_item.setRotation(-rotation)
 
             # Wycentruj w scenie
             self._stamp_preview_scene.setSceneRect(self._stamp_preview_scene.itemsBoundingRect())
@@ -465,7 +487,9 @@ class WatermarkPage(BasePage):
 
         # Użyj konfiguracji z profilu jeśli jest załadowana, w przeciwnym razie z pickera
         if self._loaded_stamp_config is not None:
-            config = self._loaded_stamp_config
+            # Użyj konfiguracji z profilu ale skopiuj ją, żeby nie modyfikować oryginału
+            from copy import deepcopy
+            config = deepcopy(self._loaded_stamp_config)
         else:
             config = self._stamp_picker.get_stamp_config()
             if not config:
@@ -476,9 +500,34 @@ class WatermarkPage(BasePage):
                 )
                 return
 
-            # Zastosuj rotację i narożnik z UI tylko dla konfiguracji z pickera
-            config.rotation = float(self._stamp_rotation_slider.value())
-            config.corner = self._stamp_corner_combo.currentData()
+        # ZAWSZE zastosuj rotację i narożnik z UI (użytkownik mógł je zmienić)
+        config.rotation = float(self._stamp_rotation_slider.value())
+        config.corner = self._stamp_corner_combo.currentData()
+
+        # Zaktualizuj rozmiar z slidera (dla spójności z podglądem)
+        size = self._stamp_size_slider.value()
+        if config.stamp_path:
+            # Dla zewnętrznych plików zachowaj oryginalne proporcje
+            try:
+                from PIL import Image
+                img = Image.open(config.stamp_path)
+                aspect_ratio = img.width / img.height
+                img.close()
+            except Exception:
+                aspect_ratio = 1.0
+
+            if aspect_ratio >= 1.0:
+                config.width = size * 4
+                config.height = config.width / aspect_ratio
+            else:
+                config.height = size * 4
+                config.width = config.height * aspect_ratio
+        else:
+            from pdfdeck.core.models import StampShape
+            config.width = size * 4
+            config.height = size * 2 if config.shape != StampShape.CIRCLE else size * 4
+        config.font_size = size * 0.6
+        config.circular_font_size = size * 0.25
 
         try:
             # Dodaj do aktualnej strony (index 0)
@@ -847,7 +896,8 @@ class WatermarkPage(BasePage):
         self._preview_text_item.setRotation(0)
         rect = self._preview_text_item.boundingRect()
         self._preview_text_item.setTransformOriginPoint(rect.center())
-        self._preview_text_item.setRotation(rotation)
+        # Neguj rotację bo PyQt6 używa clockwise, a PIL (w PDF) używa counter-clockwise
+        self._preview_text_item.setRotation(-rotation)
 
         # Wycentruj w scenie
         self._preview_scene.setSceneRect(self._preview_scene.itemsBoundingRect())
@@ -981,8 +1031,14 @@ class WatermarkPage(BasePage):
         """Zapisuje aktualną konfigurację jako profil pieczątki."""
         from PyQt6.QtWidgets import QInputDialog
         from datetime import datetime
+        from copy import deepcopy
 
-        config = self._stamp_picker.get_stamp_config()
+        # Użyj załadowanego profilu jeśli istnieje, w przeciwnym razie z pickera
+        if self._loaded_stamp_config is not None:
+            config = deepcopy(self._loaded_stamp_config)
+        else:
+            config = self._stamp_picker.get_stamp_config()
+
         if not config:
             QMessageBox.warning(
                 self,
@@ -995,9 +1051,34 @@ class WatermarkPage(BasePage):
         if not ok or not name.strip():
             return
 
-        # Zastosuj rotację i narożnik z UI
+        # Zastosuj rotację, narożnik i rozmiar z UI (użytkownik mógł je zmienić)
         config.rotation = float(self._stamp_rotation_slider.value())
         config.corner = self._stamp_corner_combo.currentData()
+
+        # Zaktualizuj rozmiar z slidera
+        size = self._stamp_size_slider.value()
+        if config.stamp_path:
+            # Dla zewnętrznych plików zachowaj oryginalne proporcje
+            try:
+                from PIL import Image
+                img = Image.open(config.stamp_path)
+                aspect_ratio = img.width / img.height
+                img.close()
+            except Exception:
+                aspect_ratio = 1.0
+
+            if aspect_ratio >= 1.0:
+                config.width = size * 4
+                config.height = config.width / aspect_ratio
+            else:
+                config.height = size * 4
+                config.width = config.height * aspect_ratio
+        else:
+            from pdfdeck.core.models import StampShape
+            config.width = size * 4
+            config.height = size * 2 if config.shape != StampShape.CIRCLE else size * 4
+        config.font_size = size * 0.6
+        config.circular_font_size = size * 0.25
 
         profile = StampProfile(
             metadata=ProfileMetadata(
@@ -1013,7 +1094,17 @@ class WatermarkPage(BasePage):
         pm = ProfileManager()
         pm.save_stamp_profile(profile)
 
+        # Odśwież listę profili
         self._stamp_profile_combo.refresh()
+
+        # Ważne: Ustaw combo na "(brak profilu)" żeby użytkownik mógł dalej pracować z pickerem
+        # bez ładowania zapisanego profilu
+        self._stamp_profile_combo._combo.setCurrentIndex(0)  # "(brak profilu)"
+
+        # Resetuj załadowany profil, żeby użytkownik mógł kontynuować pracę z pickerem
+        self._loaded_stamp_config = None
+        self._update_stamp_preview()
+
         QMessageBox.information(self, "Sukces", f"Profil '{name}' zapisany!")
 
     def _load_stamp_profile(self, name: str) -> None:
@@ -1025,7 +1116,34 @@ class WatermarkPage(BasePage):
 
         config = profile.config
 
-        # Ustaw rotację i narożnik w UI
+        # Oblicz rozmiar z zapisanej konfiguracji (odwrócenie mnożnika)
+        if config.stamp_path:
+            # Dla obrazków: odtwórz size z width lub height (w zależności od aspect_ratio)
+            try:
+                from PIL import Image
+                img = Image.open(config.stamp_path)
+                aspect_ratio = img.width / img.height
+                img.close()
+            except Exception:
+                aspect_ratio = 1.0
+
+            # Użyj większego wymiaru jako bazę
+            if aspect_ratio >= 1.0:
+                size = int(config.width / 8)
+            else:
+                size = int(config.height / 8)
+        else:
+            # Dla zwykłych: width = size * 4
+            size = int(config.width / 4)
+
+        # Ogranicz rozmiar do zakresu slidera (24-120)
+        size = max(24, min(120, size))
+
+        # Ustaw rozmiar w sliderze
+        self._stamp_size_slider.setValue(size)
+        self._stamp_size_value.setText(f"{size}pt")
+
+        # Ustaw rotację w UI
         self._stamp_rotation_slider.setValue(int(config.rotation))
         self._stamp_rotation_value.setText(f"{int(config.rotation)}°")
 
@@ -1037,6 +1155,9 @@ class WatermarkPage(BasePage):
 
         # Zapisz konfigurację do użycia przy dodawaniu pieczątki
         self._loaded_stamp_config = config
+
+        # Aktualizuj podgląd z załadowaną konfiguracją
+        self._update_stamp_preview()
 
     # === Public API ===
 

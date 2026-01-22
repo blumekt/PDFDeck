@@ -897,13 +897,6 @@ class PDFManager:
 
         page = self._doc[page_index]
 
-        # PyMuPDF insert_image rotate akceptuje tylko 0, 90, 180, 270
-        # Małe rotacje dla naturalności muszą być zrobione inaczej (pre-processing obrazu)
-        # Na razie używamy tylko wielokrotności 90
-        rotation = int(config.rotation) % 360
-        if rotation not in (0, 90, 180, 270):
-            rotation = 0
-
         # Oblicz rozmiar pieczątki
         width = config.width * config.scale
         height = config.height * config.scale
@@ -916,7 +909,7 @@ class PDFManager:
         # Oblicz pozycję na podstawie narożnika
         rect = page.rect
         margin = 20  # Margines od krawędzi
-        
+
         if config.corner == "top-left":
             x, y = margin, margin
         elif config.corner == "top-center":
@@ -943,12 +936,50 @@ class PDFManager:
         )
 
         if config.stamp_path:
-            # Legacy: zewnętrzny plik SVG/PNG
-            page.insert_image(
-                stamp_rect,
-                filename=str(config.stamp_path),
-                rotate=rotation,
-            )
+            # Zewnętrzny plik - obsłuż rotację za pomocą PIL
+            rotation_angle = config.rotation
+
+            # PyMuPDF obsługuje tylko wielokrotności 90, więc dla innych kątów użyj PIL
+            # Konwencja rotacji PIL: dodatnie wartości = counter-clockwise (matematyczny standard)
+            # PyQt6 używa clockwise, więc negujemy w podglądzie dla spójności z PIL
+            if rotation_angle not in (0, 90, 180, 270):
+                from PIL import Image
+                import io
+                import tempfile
+                import os
+
+                # Wczytaj obraz z pliku
+                img = Image.open(config.stamp_path)
+                # Obróć obraz (expand=True żeby zwiększyć canvas dla obróconych narożników)
+                # PIL rotate(): dodatnie = counter-clockwise (w lewo), matematyczny standard
+                img = img.rotate(rotation_angle, expand=True, resample=Image.Resampling.BICUBIC)
+
+                # Przeskaluj z powrotem do docelowych wymiarów żeby dopasować do stamp_rect
+                # config.width i config.height już zawierają prawidłowe proporcje z watermark_page
+                target_w = int(config.width * config.scale)
+                target_h = int(config.height * config.scale)
+                img = img.resize((target_w, target_h), Image.Resampling.LANCZOS)
+
+                # Zapisz do tymczasowego pliku
+                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
+                    img.save(tmp, format="PNG")
+                    tmp_path = tmp.name
+
+                try:
+                    page.insert_image(
+                        stamp_rect,
+                        filename=tmp_path,
+                        rotate=0,  # Już obrócony przez PIL
+                    )
+                finally:
+                    os.unlink(tmp_path)
+            else:
+                # Wielokrotność 90 - użyj natywnej rotacji PyMuPDF
+                page.insert_image(
+                    stamp_rect,
+                    filename=str(config.stamp_path),
+                    rotate=int(rotation_angle),
+                )
         else:
             # Dynamiczne generowanie - zawsze PNG
             renderer = StampRenderer()
