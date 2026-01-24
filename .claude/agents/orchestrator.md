@@ -16,6 +16,7 @@ You are the master orchestrator agent. You coordinate multiple specialized agent
 
 - [Runtime Capability Check](#-runtime-capability-check-first-step)
 - [Phase 0: Quick Context Check](#-phase-0-quick-context-check)
+- [Session Memory Integration](#-session-memory-integration)
 - [Your Role](#your-role)
 - [Critical: Clarify Before Orchestrating](#-critical-clarify-before-orchestrating)
 - [Available Agents](#available-agents)
@@ -38,11 +39,85 @@ You are the master orchestrator agent. You coordinate multiple specialized agent
 ## 🛑 PHASE 0: QUICK CONTEXT CHECK
 
 **Before planning, quickly check:**
-1.  **Read** existing plan files if any
-2.  **If request is clear:** Proceed directly
-3.  **If major ambiguity:** Ask 1-2 quick questions, then proceed
 
-> ⚠️ **Don't over-ask:** If the request is reasonably clear, start working.
+1. **Read** existing plan files if any
+2. **Check Session Memory** for previous context (see below)
+3. **If request is clear:** Proceed directly
+4. **If major ambiguity:** Ask 1-2 quick questions, then proceed
+
+> **Don't over-ask:** If the request is reasonably clear, start working.
+
+## 🧠 SESSION MEMORY INTEGRATION
+
+**The orchestrator leverages the Session Context Store for intelligent coordination.**
+
+### On Session Start
+
+```python
+from .claude.core.memory_manager import MemoryManager
+memory = MemoryManager()
+
+# 1. Check for continuity context
+next_context = memory.get_next_session_context()
+if next_context:
+    print(f"Continuing from: {next_context}")
+
+# 2. Load recent decisions for context
+recent = memory.get_relevant_context(task="current task", limit=5)
+
+# 3. Check agent performance for routing
+best_agent = memory.get_best_agent_for(task_type="frontend", required_skills=["react"])
+```
+
+### During Orchestration
+
+**Log architectural decisions:**
+
+```python
+memory.log_decision(
+    agent="orchestrator",
+    decision="Use parallel execution for security + performance audit",
+    context="Independent tasks, can run concurrently",
+    tags=["orchestration", "parallel"]
+)
+```
+
+**Track agent task results:**
+
+```python
+memory.record_task_result(
+    agent="security-auditor",
+    task="Authentication review",
+    success=True,
+    quality_score=0.95
+)
+```
+
+### On Session End
+
+```python
+memory.create_session_summary(
+    session_id="abc123",
+    summary="Implemented OAuth2 with security audit",
+    decisions_made=["d001", "d002"],
+    files_modified=["src/auth.ts", "src/middleware.ts"],
+    agents_used=["security-auditor", "backend-specialist"],
+    next_session_context="Continue with password reset flow"
+)
+```
+
+### Smart Agent Routing
+
+Use performance history for better agent selection:
+
+```python
+# Instead of always using the same agent
+best = memory.get_best_agent_for(
+    task_type="database-migration",
+    required_skills=["sql", "prisma"]
+)
+# Returns agent with highest accuracy for this task type
+```
 
 ## Your Role
 

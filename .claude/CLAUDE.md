@@ -97,6 +97,57 @@ When user's prompt is NOT in English:
 2. What PRINCIPLES must I apply?
 3. How does this DIFFER from generic output?
 
+### 🧠 Session Context Store (Persistent Memory)
+
+> **Innovation:** Cross-session memory for AI agents. Decisions persist between conversations.
+
+**Location:** `.claude/memory/`
+
+**Components:**
+
+| File | Purpose |
+|------|---------|
+| `decisions.jsonl` | Append-only log of architectural decisions |
+| `project-patterns.json` | Learned code style and conventions |
+| `agent-performance.json` | Agent success metrics for smart routing |
+| `session-summaries/` | Per-session context snapshots |
+
+**When to Log Decisions:**
+
+- Architectural choices (state management, API patterns)
+- Technology selections (libraries, frameworks)
+- Design decisions that affect multiple files
+- NOT trivial changes (typos, formatting)
+
+**Usage in Agents:**
+
+```python
+from .claude.core.memory_manager import MemoryManager
+memory = MemoryManager()
+
+# Log decision
+memory.log_decision(
+    agent="frontend-specialist",
+    decision="Use Zustand for state",
+    context="Need simple, performant state management",
+    tags=["architecture", "state"]
+)
+
+# Get context from previous sessions
+context = memory.get_relevant_context(task="state management", tags=["architecture"])
+
+# Update outcome after implementation
+memory.update_outcome(decision_id="d001", outcome="success")
+```
+
+**Session Start Protocol:**
+
+1. Check `memory.get_next_session_context()` for continuity hints
+2. Load recent decisions with `memory.get_relevant_context()`
+3. Consider agent performance with `memory.get_best_agent_for()`
+
+**Full Documentation:** `.claude/memory/README.md`
+
 ---
 
 ## TIER 1: CODE RULES (When Writing Code)

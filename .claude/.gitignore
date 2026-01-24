@@ -1,0 +1,23 @@
+# Logs
+logs/*.log
+
+# Local settings (user-specific)
+# settings.local.json - uncomment if you want project-specific settings tracked
+
+# Plans (usually session-specific)
+# plans/*.md - uncomment to track plans
+
+# Memory (session-specific data)
+# Keep README.md and template structure, ignore actual data
+memory/decisions.jsonl
+memory/decisions-archive-*.jsonl
+memory/project-patterns.json
+memory/agent-performance.json
+memory/session-summaries/*.json
+# Uncomment below to track memory (useful for team projects):
+# !memory/decisions.jsonl
+# !memory/project-patterns.json
+
+# Cache
+__pycache__/
+*.pyc

@@ -74,7 +74,7 @@ installer_iss = "installer/pdfdeck_installer.iss"
 
 [tool.installer]
 app_name = "PDFDeck"
-app_id = "{A7B8C9D0-E1F2-3456-7890-ABCDEF123456}"
+app_id = "{15710936-14AE-4EA5-9E4D-BD6EF58234A4}"
 publisher = "PDFDeck Team"
 description = "Zaawansowana aplikacja do manipulacji PDF"
 url = "https://github.com/blumekt/PDFDeck"

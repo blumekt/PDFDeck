@@ -221,9 +221,8 @@ class InstallerConfig:
         # Generate app_id if not provided
         app_id = config_data.get("app_id", "")
         if not app_id:
-            # Generate a deterministic GUID based on app name
-            namespace = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-            app_id = "{" + str(uuid.uuid5(namespace, app_name)).upper() + "}"
+            # Generate a unique random GUID for this application
+            app_id = "{" + str(uuid.uuid4()).upper() + "}"
 
         # Create config
         config = cls(
@@ -484,8 +483,8 @@ AppSupportURL={{#MyAppURL}}
 AppUpdatesURL={{#MyAppURL}}
 AppMutex={{#MyAppName}}Mutex
 
-; Install location
-DefaultDirName={{autopf}}\\{{#MyAppName}}
+; Install location - always ends with app name
+DefaultDirName={{localappdata}}\\Programs\\{{#MyAppName}}
 DefaultGroupName={{#MyAppName}}
 
 ; Install without admin privileges (user folder)

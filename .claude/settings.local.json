@@ -1,10 +1,118 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ping:*)",
-      "Bash(grep:*)",
-      "Bash(findstr:*)",
-      "Bash(git add:*)"
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(yarn *)",
+      "Bash(pnpm *)",
+      "Bash(bun *)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(pip *)",
+      "Bash(pip3 *)",
+      "Bash(node *)",
+      "Bash(deno *)",
+      "Bash(cargo *)",
+      "Bash(go *)",
+      "Bash(dotnet *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(gh *)",
+      "Bash(ls *)",
+      "Bash(dir *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(echo *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(pwd)",
+      "Bash(which *)",
+      "Bash(where *)",
+      "Bash(type *)",
+      "Bash(source *)",
+      "Bash(export *)",
+      "Bash(set *)",
+      "Bash(env *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(kubectl *)",
+      "Bash(make *)",
+      "Bash(cmake *)",
+      "Bash(gradle *)",
+      "Bash(mvn *)",
+      "Bash(composer *)",
+      "Bash(bundle *)",
+      "Bash(gem *)",
+      "Bash(flutter *)",
+      "Bash(swift *)",
+      "Bash(rustup *)",
+      "Bash(powershell *)",
+      "Bash(cmd *)",
+      "Bash(wsl *)",
+      "Bash(python:*)",
+      "Bash(npm run electron:dev:*)",
+      "Bash(npm run)",
+      "Bash(timeout 25 npm run dev:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(sudo rm -rf *)",
+      "Bash(del /s /q C:\\*)",
+      "Bash(format *)",
+      "Bash(mkfs *)",
+      "Bash(dd if=* of=/dev/*)"
+    ]
+  },
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "pattern": "Read(*)",
+        "action": "allow"
+      },
+      {
+        "pattern": "Glob(*)",
+        "action": "allow"
+      },
+      {
+        "pattern": "Grep(*)",
+        "action": "allow"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "pattern": "*.env*",
+        "action": "deny",
+        "message": "Cannot write to .env files directly - security restriction"
+      },
+      {
+        "matcher": "Write",
+        "pattern": "*credentials*",
+        "action": "ask"
+      },
+      {
+        "matcher": "Write",
+        "pattern": "*secret*",
+        "action": "ask"
+      },
+      {
+        "matcher": "Edit",
+        "pattern": "*credentials*",
+        "action": "ask"
+      },
+      {
+        "matcher": "Edit",
+        "pattern": "*secret*",
+        "action": "ask"
+      }
     ]
   }
 }

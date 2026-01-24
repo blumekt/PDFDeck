@@ -4,6 +4,7 @@ description: Pragmatic coding standards - concise, direct, no over-engineering, 
 allowed-tools: Read, Write, Edit
 version: 2.0
 priority: CRITICAL
+user-invocable: false
 ---
 
 # Clean Code - Pragmatic AI Coding Standards
