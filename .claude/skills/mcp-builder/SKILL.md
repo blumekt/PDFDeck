@@ -43,8 +43,7 @@ my-mcp-server/
 | Type | Use |
 |------|-----|
 | **Stdio** | Local, CLI-based |
-| **SSE** | Web-based, streaming |
-| **WebSocket** | Real-time, bidirectional |
+| **Streamable HTTP** | Remote servers (replaces the older HTTP+SSE transport) |
 
 ---
 

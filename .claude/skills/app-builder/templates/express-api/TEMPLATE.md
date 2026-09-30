@@ -9,7 +9,7 @@ description: Express.js REST API template principles. TypeScript, Prisma, JWT.
 
 | Component | Technology |
 |-----------|------------|
-| Runtime | Node.js 20+ |
+| Runtime | Node.js (current LTS) |
 | Framework | Express.js |
 | Language | TypeScript |
 | Database | PostgreSQL + Prisma |

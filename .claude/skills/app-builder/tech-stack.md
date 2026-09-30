@@ -1,20 +1,20 @@
-# Tech Stack Selection (2025)
+# Tech Stack Selection
 
-> Default and alternative technology choices for web applications.
+> Default and alternative technology choices for web applications. Use the current stable release of each (current LTS for runtimes); in an existing project the lockfile decides.
 
-## Default Stack (Web App - 2025)
+## Default Stack (Web App)
 
 ```yaml
 Frontend:
-  framework: Next.js 16 (Stable)
-  language: TypeScript 5.7+
-  styling: Tailwind CSS v4
-  state: React 19 Actions / Server Components
-  bundler: Turbopack (Stable for Dev)
+  framework: Next.js (App Router)
+  language: TypeScript
+  styling: Tailwind CSS
+  state: React Actions / Server Components
+  bundler: Turbopack
 
 Backend:
-  runtime: Node.js 23
-  framework: Next.js API Routes / Hono (for Edge)
+  runtime: Node.js (current LTS)
+  framework: Next.js Route Handlers / Hono (for Edge)
   validation: Zod / TypeBox
 
 Database:
@@ -23,10 +23,10 @@ Database:
   hosting: Supabase / Neon
 
 Auth:
-  provider: Auth.js (v5) / Clerk
+  provider: Auth.js / Clerk
 
 Monorepo:
-  tool: Turborepo 2.0
+  tool: Turborepo
 ```
 
 ## Alternative Options

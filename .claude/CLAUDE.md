@@ -38,11 +38,10 @@ Agent activated → Check frontmatter "skills:" field
 | Request Type | Trigger Keywords | Active Tiers | Result |
 |--------------|------------------|--------------|--------|
 | **QUESTION** | "what is", "how does", "explain" | TIER 0 only | Text Response |
-| **SURVEY/INTEL**| "analyze", "list files", "overview" | TIER 0 + Explorer | Use Task tool (Explore subagent) |
+| **SURVEY/INTEL**| "analyze", "list files", "overview" | TIER 0 + Explorer | Use the Agent tool (Explore subagent) |
 | **SIMPLE CODE** | "fix", "add", "change" (single file) | TIER 0 + TIER 1 (lite) | Inline Edit |
 | **COMPLEX CODE**| "build", "create", "implement", "refactor" | TIER 0 + TIER 1 (full) + Agent | **Use EnterPlanMode or {task-slug}.md** |
 | **DESIGN/UI** | "design", "UI", "page", "dashboard" | TIER 0 + TIER 1 + Agent | **Use EnterPlanMode or {task-slug}.md** |
-| **SLASH CMD** | /create, /orchestrate, /debug | Command-specific flow | Variable |
 
 ---
 
@@ -51,13 +50,12 @@ Agent activated → Check frontmatter "skills:" field
 ### 🌐 Language Handling
 
 When user's prompt is NOT in English:
-1. **Internally translate** for better comprehension
-2. **Respond in user's language** - match their communication
-3. **Code comments/variables** remain in English
+1. **Respond in user's language** - match their communication
+2. **Code comments/variables** remain in English
 
 ### 🧹 Clean Code (Global Mandatory)
 
-**ALL code MUST follow `@[skills/clean-code]` rules. No exceptions.**
+**All code follows the `clean-code` skill (`.claude/skills/clean-code/SKILL.md`).**
 
 - Concise, direct, solution-focused
 - No verbose explanations
@@ -65,22 +63,19 @@ When user's prompt is NOT in English:
 - No over-engineering
 - **Self-Documentation:** Every agent is responsible for documenting their own changes in relevant `.md` files.
 - **Global Testing Mandate:** Every agent is responsible for writing and running tests for their changes. Follow the "Testing Pyramid" (Unit > Integration > E2E) and the "AAA Pattern" (Arrange, Act, Assert).
-- **Global Performance Mandate:** "Measure first, optimize second." Every agent must ensure their changes adhere to 2025 performance standards (Core Web Vitals for Web, query optimization for DB, bundle limits for FS).
+- **Global Performance Mandate:** "Measure first, optimize second." Every agent must ensure their changes adhere to current performance standards (Core Web Vitals for Web, query optimization for DB, bundle limits for FS).
 - **Infrastructure & Safety Mandate:** Every agent is responsible for the deployability and operational safety of their changes. Follow the "5-Phase Deployment Process" (Prepare, Backup, Deploy, Verify, Confirm/Rollback). Always verify environment variables and secrets security.
 
 ### 📁 File Dependency Awareness
 
-**Before modifying ANY file:**
-1. Check `CODEBASE.md` → File Dependencies
-2. Identify dependent files
-3. Update ALL affected files together
+Before modifying a file, Grep for the files that import or call it and update the affected ones in the same change.
 
 ### 🗺️ System Map Read
 
 > 🔴 **MANDATORY:** Read `ARCHITECTURE.md` at session start to understand Agents, Skills, and Scripts.
 
 **Path Awareness:**
-- Agents: `.claude/` (Project)
+- Agents: `.claude/agents/` (Project)
 - Skills: `.claude/skills/` (Project)
 - Runtime Scripts: `.claude/skills/<skill>/scripts/`
 
@@ -119,32 +114,10 @@ When user's prompt is NOT in English:
 - Design decisions that affect multiple files
 - NOT trivial changes (typos, formatting)
 
-**Usage in Agents:**
+**Usage:**
 
-```python
-from .claude.core.memory_manager import MemoryManager
-memory = MemoryManager()
-
-# Log decision
-memory.log_decision(
-    agent="frontend-specialist",
-    decision="Use Zustand for state",
-    context="Need simple, performant state management",
-    tags=["architecture", "state"]
-)
-
-# Get context from previous sessions
-context = memory.get_relevant_context(task="state management", tags=["architecture"])
-
-# Update outcome after implementation
-memory.update_outcome(decision_id="d001", outcome="success")
-```
-
-**Session Start Protocol:**
-
-1. Check `memory.get_next_session_context()` for continuity hints
-2. Load recent decisions with `memory.get_relevant_context()`
-3. Consider agent performance with `memory.get_best_agent_for()`
+- To log a decision, append one JSON line to `.claude/memory/decisions.jsonl` (fields: `.claude/memory/README.md`). To record its outcome, append a line with the same `id`, the `outcome`, and `"_type": "outcome_update"`.
+- At session start, read the newest entries of `decisions.jsonl` and the latest file in `session-summaries/` if there is one; `python .claude/core/memory_manager.py --context` prints the saved next-session hint.
 
 **Full Documentation:** `.claude/memory/README.md`
 
@@ -162,31 +135,13 @@ memory.update_outcome(decision_id="d001", outcome="success")
 
 > 🔴 **Mobile + frontend-specialist = WRONG.** Mobile = mobile-developer ONLY.
 
-### 🛑 Socratic Gate
+### 🛑 Clarifying Questions
 
-**For complex requests, STOP and ASK first:**
-
-### 🛑 GLOBAL SOCRATIC GATE (TIER 0)
-
-**MANDATORY: Every user request must pass through the Socratic Gate before ANY tool use or implementation.**
-
-| Request Type | Strategy | Required Action |
-|--------------|----------|-----------------|
-| **New Feature / Build** | Deep Discovery | ASK minimum 3 strategic questions |
-| **Code Edit / Bug Fix** | Context Check | Confirm understanding + ask impact questions |
-| **Vague / Simple** | Clarification | Ask Purpose, Users, and Scope |
-| **Full Orchestration** | Gatekeeper | **STOP** subagents until user confirms plan details |
-| **Direct "Proceed"** | Validation | **STOP** → Even if answers are given, ask 2 "Edge Case" questions |
-
-**Protocol:** 
-1. **Never Assume:** If even 1% is unclear, ASK.
-2. **Handle Spec-heavy Requests:** When user gives a list (Answers 1, 2, 3...), do NOT skip the gate. Instead, ask about **Trade-offs** or **Edge Cases** (e.g., "LocalStorage confirmed, but should we handle data clearing or versioning?") before starting.
-3. **Wait:** Do NOT invoke subagents or write code until the user clears the Gate.
-4. **Reference:** Full protocol in `@[skills/brainstorming]`.
+Ask the user only when a decision materially changes the result and nothing in the request, the repository, the plan file, or earlier answers settles it. For a new feature this is usually scope, target users, and hard constraints - ask them together in one message before building, and once they are answered, proceed. For everything else, choose a sensible default, state it, and carry on; list your assumptions in the summary so the user can correct them. Subagents cannot ask the user mid-task: they put open questions in their final report. For a raw idea that needs structured discovery, use the `brainstorming` skill (`.claude/skills/brainstorming/SKILL.md`).
 
 ### 🏁 Final Checklist Protocol
 
-**Trigger:** When the user says "son kontrolleri yap", "final checks", "çalıştır tüm testleri", or similar phrases.
+**Trigger:** When the user asks for final checks, a full test run, or a pre-deploy verification, in any language.
 
 | Task Stage | Command | Purpose |
 |------------|---------|---------|
@@ -197,22 +152,20 @@ memory.update_outcome(decision_id="d001", outcome="success")
 1. **Security** → 2. **Lint** → 3. **Schema** → 4. **Tests** → 5. **UX** → 6. **Seo** → 7. **Lighthouse/E2E**
 
 **Rules:**
-- **Completion:** A task is NOT finished until `checklist.py` returns success.
+- **Completion:** A task is NOT finished until `checklist.py` returns success. The script counts a missing check script as passed ("Script not found, skipping"), so read its output: a skipped check has not verified anything.
 - **Reporting:** If it fails, fix the **Critical** blockers first (Security/Lint).
 
 
-**Available Scripts (12 total):**
+**Available Scripts (10 total):**
 | Script | Skill | When to Use |
 |--------|-------|-------------|
 | `security_scan.py` | vulnerability-scanner | Always on deploy |
-| `dependency_analyzer.py` | vulnerability-scanner | Weekly / Deploy |
 | `lint_runner.py` | lint-and-validate | Every code change |
 | `test_runner.py` | testing-patterns | After logic change |
 | `schema_validator.py` | database-design | After DB change |
 | `ux_audit.py` | frontend-design | After UI change |
 | `accessibility_checker.py` | frontend-design | After UI change |
 | `seo_checker.py` | seo-fundamentals | After page change |
-| `bundle_analyzer.py` | performance-profiling | Before deploy |
 | `mobile_audit.py` | mobile-design | After mobile change |
 | `lighthouse_audit.py` | performance-profiling | Before deploy |
 | `playwright_runner.py` | webapp-testing | Before deploy |
@@ -225,7 +178,7 @@ memory.update_outcome(decision_id="d001", outcome="success")
 |------|-------|----------|
 | **Plan Mode** | `project-planner` | Use EnterPlanMode tool. 4-phase methodology. NO CODE before approval. |
 | **Execution** | `orchestrator` | Execute tasks. Check `{task-slug}.md` first if exists. |
-| **Question/Research** | - | Focus on understanding. Ask questions. Use Task tool (Explore). |
+| **Question/Research** | - | Focus on understanding. Ask questions. Use the Agent tool (Explore subagent). |
 
 **Plan Mode (via EnterPlanMode):**
 
@@ -235,7 +188,7 @@ memory.update_outcome(decision_id="d001", outcome="success")
 4. IMPLEMENTATION → Code + tests after approval
 
 > 🔴 **For complex changes:** Always use EnterPlanMode to get user approval before coding.
-> 🔴 **For exploration:** Use Task tool with Explore subagent for codebase analysis.
+> 🔴 **For exploration:** Use the Agent tool with the Explore subagent for codebase analysis.
 
 ---
 
@@ -245,8 +198,8 @@ memory.update_outcome(decision_id="d001", outcome="success")
 
 | Task | Read |
 |------|------|
-| Web UI/UX | `.claude/frontend-specialist.md` |
-| Mobile UI/UX | `.claude/mobile-developer.md` |
+| Web UI/UX | `.claude/agents/frontend-specialist.md` |
+| Mobile UI/UX | `.claude/agents/mobile-developer.md` |
 
 **These agents contain:**
 - Purple Ban (no violet/purple colors)

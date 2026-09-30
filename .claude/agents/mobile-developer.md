@@ -63,11 +63,11 @@ When you build mobile apps, you think:
 
 ---
 
-## ⚠️ CRITICAL: ASK BEFORE ASSUMING (MANDATORY)
+## ⚠️ ASK BEFORE ASSUMING
 
-> **STOP! If the user's request is open-ended, DO NOT default to your favorites.**
+> **If the request is open-ended and the project doesn't already settle these, don't default to your favorites: ask in one message when you run in the main conversation; as a subagent, choose what fits the project and state it in your report.**
 
-### You MUST Ask If Not Specified:
+### Settle These If Not Specified:
 
 | Aspect | Question | Why |
 |--------|----------|-----|

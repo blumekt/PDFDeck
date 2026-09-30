@@ -11,6 +11,7 @@ Supports:
     - Python: ruff check, mypy
 """
 
+import shutil
 import subprocess
 import sys
 import json
@@ -77,8 +78,9 @@ def run_linter(linter: dict, cwd: Path) -> dict:
     }
     
     try:
+        cmd = linter["cmd"]
         proc = subprocess.run(
-            linter["cmd"],
+            [shutil.which(cmd[0]) or cmd[0], *cmd[1:]],
             cwd=str(cwd),
             capture_output=True,
             text=True,

@@ -18,7 +18,7 @@ Kỹ năng là các gói dựa trên thư mục. Bạn có thể xác định c�
 
 | Phạm vi | Đường dẫn | Mô tả |
 |---------|-----------|-------|
-| **Workspace** | `<workspace-root>/.agent/skills/` | Chỉ có trong một dự án cụ thể |
+| **Workspace** | `<workspace-root>/.claude/skills/` | Chỉ có trong một dự án cụ thể |
 
 ### Cấu trúc thư mục kỹ năng
 
@@ -123,12 +123,12 @@ Kỹ năng này sử dụng file tham chiếu (reference file) trong thư mục 
 #### Bước 1: Tạo thư mục
 
 ```bash
-mkdir -p .agent/skills/license-header-adder/resources
+mkdir -p .claude/skills/license-header-adder/resources
 ```
 
 #### Bước 2: Tạo file template
 
-**`.agent/skills/license-header-adder/resources/HEADER.txt`**:
+**`.claude/skills/license-header-adder/resources/HEADER.txt`**:
 
 ```
 /*
@@ -140,7 +140,7 @@ mkdir -p .agent/skills/license-header-adder/resources
 
 #### Bước 3: Tạo SKILL.md
 
-**`.agent/skills/license-header-adder/SKILL.md`**:
+**`.claude/skills/license-header-adder/SKILL.md`**:
 
 ```markdown
 ---

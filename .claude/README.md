@@ -35,10 +35,9 @@ Claude automatycznie załaduje:
 
 - **CLAUDE.md** - Główny plik konfiguracji (TIER 0, 1, 2 rules)
 - **CLAUDE-TEMPLATE.md** - Szablon instrukcji dla nowych projektów ⭐
-- **ARCHITECTURE.md** - Dokumentacja 19 agentów, 36 skills, 11 workflows
+- **ARCHITECTURE.md** - Dokumentacja 19 agentów i 36 skills
 - **agents/** - 19 specjalistycznych agentów
 - **skills/** - 36 modułów wiedzy domenowej
-- **workflows/** - 11 procedur (slash commands)
 - **scripts/** - Master skrypty walidacji (checklist.py, verify_all.py)
 - **.shared/** - Wspólne zasoby UI/UX
 
@@ -64,27 +63,7 @@ Zadanie: "Dodaj endpoint API do zarządzania użytkownikami"
 → Skills: api-patterns, nodejs-best-practices, database-design
 ```
 
-### 3. Workflows (slash commands)
-
-Workflows to procedury do częstych zadań:
-
-- `/brainstorm` - Socratic discovery
-- `/create` - Tworzenie nowych features
-- `/debug` - Debugowanie problemów
-- `/deploy` - Deployment aplikacji
-- `/enhance` - Ulepszanie kodu
-- `/orchestrate` - Koordynacja wielu agentów
-- `/plan` - Planowanie zadań
-- `/preview` - Preview zmian
-- `/status` - Status projektu
-- `/test` - Uruchamianie testów
-- `/ui-ux-pro-max` - Zaawansowany design z 50 stylami
-
-**Jak wywołać:**
-
-Wystarczy napisać: `/create blog app` lub `/debug login error`
-
-### 4. Master skrypty walidacji
+### 3. Master skrypty walidacji
 
 #### Szybka walidacja (development):
 

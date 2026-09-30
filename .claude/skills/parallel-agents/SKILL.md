@@ -102,7 +102,9 @@ Agents: security-auditor → penetration-tester → synthesis
 | `devops-engineer` | DevOps | "deploy", "CI/CD", "infrastructure" |
 | `database-architect` | Database | "schema", "Prisma", "migrations" |
 | `mobile-developer` | Mobile | "React Native", "Flutter", "mobile" |
-| `api-designer` | API Design | "REST", "GraphQL", "OpenAPI" |
+| `code-archaeologist` | Legacy code | "legacy", "refactor", "explain codebase" |
+| `product-manager` | Requirements | "requirements", "user story", "acceptance criteria" |
+| `qa-automation-engineer` | Test automation | "e2e", "playwright", "regression" |
 | `debugger` | Debugging | "bug", "error", "not working" |
 | `explorer-agent` | Discovery | "explore", "map", "structure" |
 | `documentation-writer` | Documentation | "write docs", "create README", "generate API docs" |
@@ -117,11 +119,11 @@ Agents: security-auditor → penetration-tester → synthesis
 
 These work alongside custom agents:
 
-| Agent | Model | Purpose |
-|-------|-------|---------|
-| **Explore** | Haiku | Fast read-only codebase search |
-| **Plan** | Sonnet | Research during plan mode |
-| **General-purpose** | Sonnet | Complex multi-step modifications |
+| Agent | Purpose |
+|-------|---------|
+| **Explore** | Fast read-only codebase search |
+| **Plan** | Research during plan mode |
+| **General-purpose** | Complex multi-step modifications |
 
 Use **Explore** for quick searches, **custom agents** for domain expertise.
 
@@ -158,18 +160,8 @@ After all agents complete, synthesize:
 
 ## Best Practices
 
-1. **Available agents** - 17 specialized agents can be orchestrated
+1. **Available agents** - every agent in the table above (`.claude/agents/`) can be orchestrated
 2. **Logical order** - Discovery → Analysis → Implementation → Testing
 3. **Share context** - Pass relevant findings to subsequent agents
 4. **Single synthesis** - One unified report, not separate outputs
 5. **Verify changes** - Always include test-engineer for code modifications
-
----
-
-## Key Benefits
-
-- ✅ **Single session** - All agents share context
-- ✅ **AI-controlled** - Claude orchestrates autonomously
-- ✅ **Native integration** - Works with built-in Explore, Plan agents
-- ✅ **Resume support** - Can continue previous agent work
-- ✅ **Context passing** - Findings flow between agents

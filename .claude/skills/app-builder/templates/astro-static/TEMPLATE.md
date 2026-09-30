@@ -9,7 +9,7 @@ description: Astro static site template principles. Content-focused websites, bl
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Astro 4.x |
+| Framework | Astro |
 | Content | MDX + Content Collections |
 | Styling | Tailwind CSS |
 | Integrations | Sitemap, RSS, SEO |

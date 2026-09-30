@@ -1,4 +1,4 @@
-# ORM Selection (2025)
+# ORM Selection
 
 > Choose ORM based on deployment and DX needs.
 
@@ -25,6 +25,6 @@ What's the context?
 | ORM | Best For | Trade-offs |
 |-----|----------|------------|
 | **Drizzle** | Edge, TypeScript | Newer, less examples |
-| **Prisma** | DX, schema management | Heavier, not edge-ready |
+| **Prisma** | DX, schema management | Heavier client; edge needs driver adapters |
 | **Kysely** | Type-safe SQL builder | Manual migrations |
 | **Raw SQL** | Complex queries, control | Manual type safety |

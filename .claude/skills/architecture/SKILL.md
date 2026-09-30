@@ -10,7 +10,7 @@ allowed-tools: Read, Glob, Grep
 
 ## 🎯 Selective Reading Rule
 
-**Read ONLY files relevant to the request!** Check the content map, find what you need.
+Read only the files the request needs; the content map below says which.
 
 | File | Description | When to Read |
 |------|-------------|--------------|

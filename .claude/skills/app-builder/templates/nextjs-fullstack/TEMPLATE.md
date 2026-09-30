@@ -9,7 +9,7 @@ description: Next.js full-stack template principles. App Router, Prisma, Tailwin
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js (App Router) |
 | Language | TypeScript |
 | Database | PostgreSQL + Prisma |
 | Styling | Tailwind CSS |

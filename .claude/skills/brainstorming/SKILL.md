@@ -7,29 +7,24 @@ user-invocable: true
 
 # Brainstorming & Communication Protocol
 
-> **MANDATORY:** Use for complex/vague requests, new features, updates.
+> Use for complex or vague requests, new features and updates: a wrong assumption at the start sends the whole implementation down the wrong path.
 
 ---
 
-## 🛑 SOCRATIC GATE (ENFORCEMENT)
+## Socratic Gate
 
 ### When to Trigger
 
 | Pattern | Action |
 |---------|--------|
-| "Build/Create/Make [thing]" without details | 🛑 ASK 3 questions |
-| Complex feature or architecture | 🛑 Clarify before implementing |
-| Update/change request | 🛑 Confirm scope |
-| Vague requirements | 🛑 Ask purpose, users, constraints |
+| "Build/Create/Make [thing]" without details | Ask 3 questions |
+| Complex feature or architecture | Clarify before implementing |
+| Update/change request | Confirm scope |
+| Vague requirements | Ask purpose, users, constraints |
 
-### 🚫 MANDATORY: 3 Questions Before Implementation
+### Questions Before Implementation
 
-1. **STOP** - Do NOT start coding
-2. **ASK** - Minimum 3 questions:
-   - 🎯 Purpose: What problem are you solving?
-   - 👥 Users: Who will use this?
-   - 📦 Scope: Must-have vs nice-to-have?
-3. **WAIT** - Get response before proceeding
+Before writing code, ask at least 3 questions (purpose: what problem is being solved; users: who will use it; scope: must-have vs nice-to-have) and wait for the answers, because each answer removes an implementation path that would otherwise have to be guessed.
 
 ---
 
@@ -45,15 +40,6 @@ user-invocable: true
 | **Context Before Content** | Understand greenfield/feature/refactor/debug context first |
 | **Minimum Viable Questions** | Each question must eliminate implementation paths |
 | **Generate Data, Not Assumptions** | Don't guess—ask with trade-offs |
-
-### Question Generation Process
-
-```
-1. Parse request → Extract domain, features, scale indicators
-2. Identify decision points → Blocking vs. deferable
-3. Generate questions → Priority: P0 (blocking) > P1 (high-leverage) > P2 (nice-to-have)
-4. Format with trade-offs → What, Why, Options, Default
-```
 
 ### Question Format (MANDATORY)
 

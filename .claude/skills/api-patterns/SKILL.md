@@ -7,12 +7,12 @@ user-invocable: false
 
 # API Patterns
 
-> API design principles and decision-making for 2025.
+> API design principles and decision-making.
 > **Learn to THINK, not copy fixed patterns.**
 
 ## 🎯 Selective Reading Rule
 
-**Read ONLY files relevant to the request!** Check the content map, find what you need.
+Read only the files the request needs; the content map below says which.
 
 ---
 
@@ -37,9 +37,8 @@ user-invocable: false
 
 | Need | Skill |
 |------|-------|
-| API implementation | `@[skills/backend-development]` |
 | Data structure | `@[skills/database-design]` |
-| Security details | `@[skills/security-hardening]` |
+| Security details | `@[skills/vulnerability-scanner]` |
 
 ---
 

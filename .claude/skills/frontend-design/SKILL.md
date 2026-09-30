@@ -11,21 +11,19 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 ---
 
-## 🎯 Selective Reading Rule (MANDATORY)
+## 🎯 Selective Reading Rule
 
-**Read REQUIRED files always, OPTIONAL only when needed:**
+Read the files the task needs. Section 2 below already summarizes the UX laws, so open ux-psychology.md only for a deeper dive.
 
-| File | Status | When to Read |
-|------|--------|--------------|
-| [ux-psychology.md](ux-psychology.md) | 🔴 **REQUIRED** | Always read first! |
-| [color-system.md](color-system.md) | ⚪ Optional | Color/palette decisions |
-| [typography-system.md](typography-system.md) | ⚪ Optional | Font selection/pairing |
-| [visual-effects.md](visual-effects.md) | ⚪ Optional | Glassmorphism, shadows, gradients |
-| [animation-guide.md](animation-guide.md) | ⚪ Optional | Animation needed |
-| [motion-graphics.md](motion-graphics.md) | ⚪ Optional | Lottie, GSAP, 3D |
-| [decision-trees.md](decision-trees.md) | ⚪ Optional | Context templates |
-
-> 🔴 **ux-psychology.md = ALWAYS READ. Others = only if relevant.**
+| File | When to Read |
+|------|--------------|
+| [ux-psychology.md](ux-psychology.md) | Trust, cognitive load, persuasion, audience questions |
+| [color-system.md](color-system.md) | Color/palette decisions |
+| [typography-system.md](typography-system.md) | Font selection/pairing |
+| [visual-effects.md](visual-effects.md) | Glassmorphism, shadows, gradients |
+| [animation-guide.md](animation-guide.md) | Animation needed |
+| [motion-graphics.md](motion-graphics.md) | Lottie, GSAP, 3D |
+| [decision-trees.md](decision-trees.md) | Context templates |
 
 ---
 
@@ -39,11 +37,11 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 ---
 
-## ⚠️ CRITICAL: ASK BEFORE ASSUMING (MANDATORY)
+## Ask Before Assuming
 
-> **STOP! If the user's request is open-ended, DO NOT default to your favorites.**
+When the request leaves the visual direction open, ask instead of falling back on your usual defaults - those defaults are what make a result look generic.
 
-### When User Prompt is Vague, ASK:
+### When the Request Is Vague, Ask:
 
 **Color not specified?** Ask:
 > "What color palette do you prefer? (blue/green/orange/neutral/other?)"
@@ -67,7 +65,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 | Dark background + neon glow | Overused, "AI look" | What does the BRAND actually need? |
 | **Rounded everything** | Generic/Safe | Where can I use sharp, brutalist edges? |
 
-> 🔴 **"Every 'safe' structure you choose brings you one step closer to a generic template. TAKE RISKS."**
+> Claude Opus 5.5's own fallbacks when no direction is given: a cream/off-white background, italic accent words in headlines, numbered "01 / 02 / 03" section labels, monospace labels, pill-shaped buttons. Treat them like the rows above - use one only when the brand calls for it.
 
 ---
 

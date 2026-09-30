@@ -21,26 +21,22 @@ allowed-tools: Read, Glob, Grep, Bash
 
 ---
 
-## 🔴 MANDATORY: Read Reference Files Before Working!
+## Reference Files
 
-**⛔ DO NOT start development until you read the relevant files:**
+Read the files the task touches before working on it.
 
-### Universal (Always Read)
-
-| File | Content | Status |
-|------|---------|--------|
-| **[mobile-design-thinking.md](mobile-design-thinking.md)** | **⚠️ ANTI-MEMORIZATION: Forces thinking, prevents AI defaults** | **⬜ CRITICAL FIRST** |
-| **[touch-psychology.md](touch-psychology.md)** | **Fitts' Law, gestures, haptics, thumb zone** | **⬜ CRITICAL** |
-| **[mobile-performance.md](mobile-performance.md)** | **RN/Flutter performance, 60fps, memory** | **⬜ CRITICAL** |
-| **[mobile-backend.md](mobile-backend.md)** | **Push notifications, offline sync, mobile API** | **⬜ CRITICAL** |
-| **[mobile-testing.md](mobile-testing.md)** | **Testing pyramid, E2E, platform-specific** | **⬜ CRITICAL** |
-| **[mobile-debugging.md](mobile-debugging.md)** | **Native vs JS debugging, Flipper, Logcat** | **⬜ CRITICAL** |
-| [mobile-navigation.md](mobile-navigation.md) | Tab/Stack/Drawer, deep linking | ⬜ Read |
-| [mobile-typography.md](mobile-typography.md) | System fonts, Dynamic Type, a11y | ⬜ Read |
-| [mobile-color-system.md](mobile-color-system.md) | OLED, dark mode, battery-aware | ⬜ Read |
-| [decision-trees.md](decision-trees.md) | Framework/state/storage selection | ⬜ Read |
-
-> 🧠 **mobile-design-thinking.md is PRIORITY!** This file ensures AI thinks instead of using memorized patterns.
+| File | Content |
+|------|---------|
+| [mobile-design-thinking.md](mobile-design-thinking.md) | Default mobile patterns to question before using |
+| [touch-psychology.md](touch-psychology.md) | Fitts' Law, gestures, haptics, thumb zone |
+| [mobile-performance.md](mobile-performance.md) | RN/Flutter performance, 60fps, memory |
+| [mobile-backend.md](mobile-backend.md) | Push notifications, offline sync, mobile API |
+| [mobile-testing.md](mobile-testing.md) | Testing pyramid, E2E, platform-specific |
+| [mobile-debugging.md](mobile-debugging.md) | Native vs JS debugging, Logcat |
+| [mobile-navigation.md](mobile-navigation.md) | Tab/Stack/Drawer, deep linking |
+| [mobile-typography.md](mobile-typography.md) | System fonts, Dynamic Type, a11y |
+| [mobile-color-system.md](mobile-color-system.md) | OLED, dark mode, battery-aware |
+| [decision-trees.md](decision-trees.md) | Framework/state/storage selection |
 
 ### Platform-Specific (Read Based on Target)
 
@@ -50,17 +46,13 @@ allowed-tools: Read, Glob, Grep, Bash
 | **Android** | [platform-android.md](platform-android.md) | Material Design 3, Roboto, Compose patterns | Building for Android |
 | **Cross-Platform** | Both above | Platform divergence points | React Native / Flutter |
 
-> 🔴 **If building for iOS → Read platform-ios.md FIRST!**
-> 🔴 **If building for Android → Read platform-android.md FIRST!**
-> 🔴 **If cross-platform → Read BOTH and apply conditional platform logic!**
-
 ---
 
-## ⚠️ CRITICAL: ASK BEFORE ASSUMING (MANDATORY)
+## Ask Before Assuming
 
-> **STOP! If the user's request is open-ended, DO NOT default to your favorites.**
+When the request leaves these open, ask instead of falling back on your usual defaults - each one changes most later decisions.
 
-### You MUST Ask If Not Specified:
+### Ask If Not Specified:
 
 | Aspect | Ask | Why |
 |--------|-----|-----|
@@ -71,9 +63,9 @@ allowed-tools: Read, Glob, Grep, Bash
 | **Offline** | "Does this need to work offline?" | Affects data strategy |
 | **Target devices** | "Phone only, or tablet support?" | Layout complexity |
 
-### ⛔ AI MOBILE ANTI-PATTERNS (YASAK LİSTESİ)
+### AI Mobile Anti-Patterns
 
-> 🚫 **These are AI default tendencies that MUST be avoided!**
+> Common AI default tendencies; each row says why it fails and what to do instead.
 
 #### Performance Sins
 
@@ -148,7 +140,7 @@ Error Dialogs       -                             ✅ Platform conventions for a
 | **Min Touch Target** | 44pt × 44pt | 48dp × 48dp |
 | **Back Navigation** | Edge swipe left | System back button/gesture |
 | **Bottom Tab Icons** | SF Symbols | Material Symbols |
-| **Action Sheet** | UIActionSheet from bottom | Bottom Sheet / Dialog |
+| **Action Sheet** | `UIAlertController` (action sheet) / SwiftUI `confirmationDialog` | Bottom Sheet / Dialog |
 | **Progress** | Spinner | Linear progress (Material) |
 | **Pull to Refresh** | Native UIRefreshControl | SwipeRefreshLayout |
 
@@ -270,50 +262,6 @@ For complete guide: [mobile-performance.md](mobile-performance.md)
 
 ---
 
-## 📝 CHECKPOINT (MANDATORY Before Any Mobile Work)
-
-> **Before writing ANY mobile code, you MUST complete this checkpoint:**
-
-```
-🧠 CHECKPOINT:
-
-Platform:   [ iOS / Android / Both ]
-Framework:  [ React Native / Flutter / SwiftUI / Kotlin ]
-Files Read: [ List the skill files you've read ]
-
-3 Principles I Will Apply:
-1. _______________
-2. _______________
-3. _______________
-
-Anti-Patterns I Will Avoid:
-1. _______________
-2. _______________
-```
-
-**Example:**
-```
-🧠 CHECKPOINT:
-
-Platform:   iOS + Android (Cross-platform)
-Framework:  React Native + Expo
-Files Read: touch-psychology.md, mobile-performance.md, platform-ios.md, platform-android.md
-
-3 Principles I Will Apply:
-1. FlatList with React.memo + useCallback for all lists
-2. 48px touch targets, thumb zone for primary CTAs
-3. Platform-specific navigation (edge swipe iOS, back button Android)
-
-Anti-Patterns I Will Avoid:
-1. ScrollView for lists → FlatList
-2. Inline renderItem → Memoized
-3. AsyncStorage for tokens → SecureStore
-```
-
-> 🔴 **Can't fill the checkpoint? → GO BACK AND READ THE SKILL FILES.**
-
----
-
 ## 🔧 Framework Decision Tree
 
 ```
@@ -379,7 +327,7 @@ For deeper guidance on specific areas:
 
 | File | When to Use |
 |------|-------------|
-| [mobile-design-thinking.md](mobile-design-thinking.md) | **FIRST! Anti-memorization, forces context-based thinking** |
+| [mobile-design-thinking.md](mobile-design-thinking.md) | Default mobile patterns to question before using |
 | [touch-psychology.md](touch-psychology.md) | Understanding touch interaction, Fitts' Law, gesture design |
 | [mobile-performance.md](mobile-performance.md) | Optimizing RN/Flutter, 60fps, memory/battery |
 | [platform-ios.md](platform-ios.md) | iOS-specific design, HIG compliance |

@@ -9,7 +9,7 @@ description: Next.js static site template principles. Landing pages, portfolios,
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Next.js 14 (Static Export) |
+| Framework | Next.js (Static Export) |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
 | Animations | Framer Motion |

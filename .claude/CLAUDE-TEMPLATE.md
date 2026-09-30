@@ -87,7 +87,6 @@ This project uses a comprehensive AI agent framework located in `.claude/`.
 
 - **19 Specialist Agents** in `.claude/agents/`
 - **36 Skills** (domain knowledge) in `.claude/skills/`
-- **11 Workflows** (slash commands) in `.claude/workflows/`
 - **Master Scripts** (validation) in `.claude/scripts/`
 
 ### Recommended Agents for This Project
@@ -116,20 +115,6 @@ This project uses a comprehensive AI agent framework located in `.claude/`.
 - `clean-code` - Coding standards (mandatory)
 - `testing-patterns` - Test strategies
 - `systematic-debugging` - Debug methodology
-
-### Workflow Commands
-
-Use slash commands to trigger workflows:
-
-```
-/plan [feature-name]     - Create implementation plan
-/create [app-name]       - Start new feature/app
-/debug [issue]           - Systematic debugging
-/test                    - Run test suite
-/deploy                  - Deployment workflow
-```
-
----
 
 ## 🏗️ Project Architecture
 
@@ -233,7 +218,7 @@ Use slash commands to trigger workflows:
 
 ### Adding a New Feature
 
-1. **Plan:** Use `/plan [feature-name]` workflow
+1. **Plan:** Break the feature into tasks (skill `plan-writing`)
 2. **Design:** Enter Plan Mode (`EnterPlanMode`) for complex features
 3. **Implement:**
    - Create/modify files in appropriate locations
@@ -246,7 +231,7 @@ Use slash commands to trigger workflows:
 
 ### Fixing a Bug
 
-1. **Debug:** Use `/debug [issue-description]` workflow
+1. **Debug:** Find the root cause first (skill `systematic-debugging`)
 2. **Reproduce:** Write failing test first
 3. **Fix:** Make minimal change to fix issue
 4. **Verify:** Test passes, no regressions

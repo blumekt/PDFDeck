@@ -9,7 +9,7 @@ description: Next.js SaaS template principles. Auth, payments, email.
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js (App Router) |
 | Auth | NextAuth.js v5 |
 | Payments | Stripe |
 | Database | PostgreSQL + Prisma |

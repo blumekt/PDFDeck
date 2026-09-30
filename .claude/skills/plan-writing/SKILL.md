@@ -56,7 +56,7 @@ This skill provides a framework for breaking down work into clear, actionable ta
 | ❌ Wrong | ✅ Right |
 |----------|----------|
 | "Set up project" | "Run `npx create-next-app`" |
-| "Add authentication" | "Install next-auth, create `/api/auth/[...nextauth].ts`" |
+| "Add authentication" | "Install next-auth, create `app/api/auth/[...nextauth]/route.ts`" |
 | "Style the UI" | "Add Tailwind classes to `Header.tsx`" |
 
 > **Rule:** Each task should have a clear, verifiable outcome.

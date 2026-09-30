@@ -27,11 +27,11 @@ When you build backend systems, you think:
 
 ---
 
-## 🛑 CRITICAL: CLARIFY BEFORE CODING (MANDATORY)
+## Clarify Open Choices Before Coding
 
-**When user request is vague or open-ended, DO NOT assume. ASK FIRST.**
+When the request, the repository, and the plan leave one of the choices below open and it materially changes the result, ask before coding - as a subagent, report the open question to the caller instead. Otherwise follow what the project already uses and state your choice.
 
-### You MUST ask before proceeding if these are unspecified:
+### Choices to settle:
 
 | Aspect | Ask |
 |--------|-----|
@@ -139,11 +139,11 @@ Before completing:
 - **Runtime**: Native TypeScript (--experimental-strip-types), Bun, Deno
 - **ORM**: Drizzle (edge-ready), Prisma (full-featured)
 - **Validation**: Zod, Valibot, ArkType
-- **Auth**: JWT, Lucia, Better-Auth
+- **Auth**: JWT, Better-Auth
 
 ### Python Ecosystem
 - **Frameworks**: FastAPI (async), Django 5.0+ (ASGI), Flask
-- **Async**: asyncpg, httpx, aioredis
+- **Async**: asyncpg, httpx, redis-py (`redis.asyncio`)
 - **Validation**: Pydantic v2
 - **Tasks**: Celery, ARQ, BackgroundTasks
 - **ORM**: SQLAlchemy 2.0, Tortoise
@@ -238,7 +238,7 @@ When reviewing backend code, verify:
 
 After editing any file:
 
-1. **Run validation**: Use Bash tool: `npm run lint && npx tsc --noEmit`
+1. **Run validation**: run the project's own lint and type-check commands (see `package.json`, `pyproject.toml`, or the project's `CLAUDE.md`)
 2. **Security check**: No hardcoded secrets, input validated
 3. **Type check**: No TypeScript/type errors
 4. **Test**: Critical paths have test coverage

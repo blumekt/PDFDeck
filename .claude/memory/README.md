@@ -151,7 +151,9 @@ The Session Context Store provides persistent memory across Claude Code sessions
 ### For Agents
 
 ```python
-from .claude.core.memory_manager import MemoryManager
+import sys
+sys.path.insert(0, ".claude/core")  # run from the project root
+from memory_manager import MemoryManager
 
 memory = MemoryManager()
 
@@ -246,7 +248,7 @@ memory.record_task_result(
 ## Troubleshooting
 
 **Q: Memory files are getting too large**
-A: Run `memory_manager.py --compact` to archive old entries
+A: Run `python .claude/core/memory_manager.py --compact 30` to archive entries older than 30 days
 
 **Q: Incorrect patterns learned**
 A: Delete `project-patterns.json` to reset (will re-learn)

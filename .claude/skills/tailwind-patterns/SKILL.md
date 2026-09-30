@@ -117,13 +117,12 @@ user-invocable: false
 
 ## 5. Dark Mode
 
-### Configuration Strategies
+### Configuration
 
 | Method | Behavior | Use When |
 |--------|----------|----------|
-| `class` | `.dark` class toggles | Manual theme switcher |
-| `media` | Follows system preference | No user control |
-| `selector` | Custom selector (v4) | Complex theming |
+| default (`prefers-color-scheme`) | Follows system preference | No user control |
+| `@custom-variant dark (&:where(.dark, .dark *));` in CSS | `.dark` class toggles | Manual theme switcher |
 
 ### Dark Mode Pattern
 

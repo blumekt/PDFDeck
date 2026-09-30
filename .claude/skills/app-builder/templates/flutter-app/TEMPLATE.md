@@ -11,7 +11,7 @@ description: Flutter mobile app template principles. Riverpod, Go Router, clean 
 |-----------|------------|
 | Framework | Flutter 3.x |
 | Language | Dart 3.x |
-| State | Riverpod 2.0 |
+| State | Riverpod |
 | Navigation | Go Router |
 | HTTP | Dio |
 | Storage | Hive |

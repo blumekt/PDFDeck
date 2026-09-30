@@ -68,7 +68,7 @@ What are you building?
 ### Native TypeScript
 
 ```
-Node.js 22+: --experimental-strip-types
+Current Node.js LTS: type stripping built in (no flag)
 ├── Run .ts files directly
 ├── No build step needed for simple projects
 └── Consider for: scripts, simple APIs

@@ -43,7 +43,7 @@ Does it need...?
 
 | Pattern | Use |
 |---------|-----|
-| **Default** | Static (cached at build) |
+| **Default** | Dynamic - `fetch` is not cached unless you opt in (`cache: 'force-cache'`) |
 | **Revalidate** | ISR (time-based refresh) |
 | **No-store** | Dynamic (every request) |
 

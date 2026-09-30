@@ -1,42 +1,6 @@
 # Mobile Design Thinking
 
-> **This file prevents AI from using memorized patterns and forces genuine thinking.**
-> Mechanisms to prevent standard AI training defaults in mobile development.
-> **The mobile equivalent of frontend's layout decomposition approach.**
-
----
-
-## 🧠 DEEP MOBILE THINKING PROTOCOL
-
-### This Process is Mandatory Before Every Mobile Project
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    DEEP MOBILE THINKING                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  1️⃣ CONTEXT SCAN                                               │
-│     └── What are my assumptions for this project?               │
-│         └── QUESTION these assumptions                          │
-│                                                                 │
-│  2️⃣ ANTI-DEFAULT ANALYSIS                                      │
-│     └── Am I applying a memorized pattern?                      │
-│         └── Is this pattern REALLY the best for THIS project?   │
-│                                                                 │
-│  3️⃣ PLATFORM DECOMPOSITION                                     │
-│     └── Did I think about iOS and Android separately?           │
-│         └── What are the platform-specific patterns?            │
-│                                                                 │
-│  4️⃣ TOUCH INTERACTION BREAKDOWN                                │
-│     └── Did I analyze each interaction individually?            │
-│         └── Did I apply Fitts' Law, Thumb Zone?                 │
-│                                                                 │
-│  5️⃣ PERFORMANCE IMPACT ANALYSIS                                │
-│     └── Did I consider performance impact of each component?    │
-│         └── Is the default solution performant?                 │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+> Default mobile patterns worth questioning, and the questions that decide between them.
 
 ---
 
@@ -166,41 +130,6 @@ Ask these questions for every default pattern:
 
 ---
 
-## 🧪 ANTI-MEMORIZATION TEST
-
-### Ask Yourself Before Every Solution
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    ANTI-MEMORIZATION CHECKLIST                  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  □ Did I pick this solution "because I always do it this way"?  │
-│    → If YES: STOP. Consider alternatives.                       │
-│                                                                 │
-│  □ Is this a pattern I've seen frequently in training data?     │
-│    → If YES: Is it REALLY suitable for THIS project?            │
-│                                                                 │
-│  □ Did I write this solution automatically without thinking?    │
-│    → If YES: Step back, do decomposition.                       │
-│                                                                 │
-│  □ Did I consider an alternative approach?                      │
-│    → If NO: Think of at least 2 alternatives, then decide.      │
-│                                                                 │
-│  □ Did I think platform-specifically?                           │
-│    → If NO: Analyze iOS and Android separately.                 │
-│                                                                 │
-│  □ Did I consider performance impact of this solution?          │
-│    → If NO: What is the memory, CPU, battery impact?            │
-│                                                                 │
-│  □ Is this solution suitable for THIS project's CONTEXT?        │
-│    → If NO: Customize based on context.                         │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## 📊 CONTEXT-BASED DECISION PROTOCOL
 
 ### Think Differently Based on Project Type
@@ -299,59 +228,3 @@ GESTURE: [Gesture Type]
 
 > 🔴 **Passing the checklist is NOT the goal. Creating great mobile UX IS the goal.**
 
----
-
-## 📝 MOBILE DESIGN COMMITMENT
-
-### Fill This at the Start of Every Mobile Project
-
-```
-📱 MOBILE DESIGN COMMITMENT
-
-Project: _______________
-Platform: iOS / Android / Both
-
-1. Default pattern I will NOT use in this project:
-   └── _______________
-   
-2. Context-specific focus for this project:
-   └── _______________
-
-3. Platform-specific differences I will implement:
-   └── iOS: _______________
-   └── Android: _______________
-
-4. Area I will specifically optimize for performance:
-   └── _______________
-
-5. Unique challenge of this project:
-   └── _______________
-
-🧠 If I can't fill this commitment → I don't understand the project well enough.
-   → Go back, understand context better, ask the user.
-```
-
----
-
-## 🚨 MANDATORY: Before Every Mobile Work
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    PRE-WORK VALIDATION                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  □ Did I complete Component Decomposition?                      │
-│  □ Did I fill the Pattern Questioning Matrix?                   │
-│  □ Did I pass the Anti-Memorization Test?                       │
-│  □ Did I make context-based decisions?                          │
-│  □ Did I analyze Interaction Breakdown?                         │
-│  □ Did I fill the Mobile Design Commitment?                     │
-│                                                                 │
-│  ⚠️ Do not write code without completing these!                 │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-> **Remember:** If you chose a solution "because that's how it's always done," you chose WITHOUT THINKING. Every project is unique. Every context is different. Every user behavior is specific. **THINK, then code.**

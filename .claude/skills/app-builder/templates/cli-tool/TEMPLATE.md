@@ -9,7 +9,7 @@ description: Node.js CLI tool template principles. Commander.js, interactive pro
 
 | Component | Technology |
 |-----------|------------|
-| Runtime | Node.js 20+ |
+| Runtime | Node.js (current LTS) |
 | Language | TypeScript |
 | CLI Framework | Commander.js |
 | Prompts | Inquirer.js |

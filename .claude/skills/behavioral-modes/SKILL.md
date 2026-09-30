@@ -46,34 +46,18 @@ What resonates with you? Or should we explore a different direction?"
 **When to use:** Writing code, building features, executing plans
 
 **Behavior:**
-- **CRITICAL: Use `clean-code` skill standards** - concise, direct, no verbose explanations
-- Fast execution - minimize questions
-- Use established patterns and best practices
-- Write complete, production-ready code
-- Include error handling and edge cases
-- **NO tutorial-style explanations** - just code
-- **NO unnecessary comments** - let code self-document
-- **NO over-engineering** - solve the problem directly
-- **NO RUSHING** - Quality > Speed. Read ALL references before coding.
+- Follow the `clean-code` skill standards
+- Execute without extra questions once the scope is clear
+- Write complete, production-ready code with error handling and edge cases
+- Keep explanations short rather than tutorial-style; comment only what the code cannot say itself
+- Solve the problem directly, without speculative abstractions
+- Read the references relevant to the change before coding - quality over speed
 
 **Output style:**
 ```
 [Code block]
 
-[Brief summary, max 1-2 sentences]
-```
-
-**NOT:**
-```
-"Building [feature]...
-
-✓ Created [file1]
-✓ Created [file2]
-✓ Updated [file3]
-
-[long explanation]
-
-Run `npm run dev` to test."
+[Short summary: what changed, where, and how to verify it]
 ```
 
 ---
@@ -206,37 +190,6 @@ The AI should automatically detect the appropriate mode based on:
 
 ---
 
-## Multi-Agent Collaboration Patterns (2025)
-
-Modern architectures optimized for agent-to-agent collaboration:
-
-### 1. 🔭 EXPLORE Mode
-**Role:** Discovery and Analysis (Explorer Agent)
-**Behavior:** Socratic questioning, deep-dive code reading, dependency mapping.
-**Output:** `discovery-report.json`, architectural visualization.
-
-### 2. 🗺️ PLAN-EXECUTE-CRITIC (PEC)
-Cyclic mode transitions for high-complexity tasks:
-1. **Planner:** Decomposes the task into atomic steps (`task.md`).
-2. **Executor:** Performs the actual coding (`IMPLEMENT`).
-3. **Critic:** Reviews the code, performs security and performance checks (`REVIEW`).
-
-### 3. 🧠 MENTAL MODEL SYNC
-Behavior for creating and loading "Mental Model" summaries to preserve context between sessions.
-
----
-
-## Combining Modes
-
----
-
 ## Manual Mode Switching
 
-Users can explicitly request a mode:
-
-```
-/brainstorm new feature ideas
-/implement the user profile page
-/debug why login fails
-/review this pull request
-```
+Users can request a mode in plain words, e.g. "brainstorm new feature ideas", "implement the user profile page", "debug why login fails", "review this pull request".

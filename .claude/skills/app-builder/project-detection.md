@@ -29,6 +29,6 @@
 1. Tokenize user request
 2. Extract keywords
 3. Determine project type
-4. Detect missing information → forward to conversation-manager
+4. Detect missing information → ask the user (question format: `brainstorming` skill)
 5. Suggest tech stack
 ```

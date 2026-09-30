@@ -1,12 +1,12 @@
 ---
 name: lint-and-validate
-description: Automatic quality control, linting, and static analysis procedures. Use after every code modification to ensure syntax correctness and project standards. Triggers onKeywords: lint, format, check, validate, types, static analysis.
+description: Linting, type-checking and static analysis procedures per ecosystem. Use after modifying code and when the user asks to lint, format, type-check or validate code.
 allowed-tools: Read, Glob, Grep, Bash
 ---
 
 # Lint and Validate Skill
 
-> **MANDATORY:** Run appropriate validation tools after EVERY code change. Do not finish a task until the code is error-free.
+> Run the ecosystem's validation tools after each code change, and do not commit or report a task as done until they pass - errors left for later break the next build.
 
 ### Procedures by Ecosystem
 
@@ -23,16 +23,14 @@ allowed-tools: Read, Glob, Grep, Bash
 ## The Quality Loop
 1. **Write/Edit Code**
 2. **Run Audit:** `npm run lint && npx tsc --noEmit`
-3. **Analyze Report:** Check the "FINAL AUDIT REPORT" section.
-4. **Fix & Repeat:** Submitting code with "FINAL AUDIT" failures is NOT allowed.
+3. **Analyze Report:** Read the lint and type-check output (for `scripts/lint_runner.py`: its `SUMMARY` section).
+4. **Fix & Repeat:** Fix every reported error and re-run until the checks pass.
 
 ## Error Handling
 - If `lint` fails: Fix the style or syntax issues immediately.
 - If `tsc` fails: Correct type mismatches before proceeding.
 - If no tool is configured: Check the project root for `.eslintrc`, `tsconfig.json`, `pyproject.toml` and suggest creating one.
 
----
-**Strict Rule:** No code should be committed or reported as "done" without passing these checks.
 
 ---
 

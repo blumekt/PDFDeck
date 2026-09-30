@@ -17,11 +17,10 @@ This is a modular system consisting of:
 ## 🏗️ Directory Structure
 
 ```plaintext
-.agent/
+.claude/
 ├── ARCHITECTURE.md          # This file
 ├── agents/                  # 19 Specialist Agents
 ├── skills/                  # 36 Skills
-├── workflows/               # 11 Slash Commands
 ├── rules/                   # Global Rules
 └── scripts/                 # Master Validation Scripts
 ```
@@ -167,26 +166,6 @@ Modular knowledge domains that agents can load on-demand. based on task context.
 
 ---
 
-## 🔄 Workflows (11)
-
-Slash command procedures. Invoke with `/command`.
-
-| Command | Description |
-| ------- | ----------- |
-| `/brainstorm` | Socratic discovery |
-| `/create` | Create new features |
-| `/debug` | Debug issues |
-| `/deploy` | Deploy application |
-| `/enhance` | Improve existing code |
-| `/orchestrate` | Multi-agent coordination |
-| `/plan` | Task breakdown |
-| `/preview` | Preview changes |
-| `/status` | Check project status |
-| `/test` | Run tests |
-| `/ui-ux-pro-max` | Design with 50 styles |
-
----
-
 ## 🎯 Skill Loading Protocol
 
 ```plaintext
@@ -232,10 +211,10 @@ Master validation scripts that orchestrate skill-level scripts.
 
 ```bash
 # Quick validation during development
-python .agent/scripts/checklist.py .
+python .claude/scripts/checklist.py .
 
 # Full verification before deployment
-python .agent/scripts/verify_all.py . --url http://localhost:3000
+python .claude/scripts/verify_all.py . --url http://localhost:3000
 ```
 
 ### What They Check

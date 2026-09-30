@@ -54,15 +54,11 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 
 ### Complex Expressions
 
+Inside double quotes only a plain variable expands; member access needs a subexpression:
+
 | ❌ Wrong | ✅ Correct |
 |----------|-----------|
-| `"Value: $($obj.prop.sub)"` | Store in variable first |
-
-**Pattern:**
-```
-$value = $obj.prop.sub
-Write-Output "Value: $value"
-```
+| `"Value: $obj.prop"` (prints the object, then the literal `.prop`) | `"Value: $($obj.prop)"` |
 
 ---
 
@@ -72,9 +68,9 @@ Write-Output "Value: $value"
 
 | Value | Use |
 |-------|-----|
-| Stop | Development (fail fast) |
-| Continue | Production scripts |
-| SilentlyContinue | When errors expected |
+| Stop | Scripts with try/catch - `catch` only sees terminating errors, and Stop makes cmdlet errors terminating |
+| Continue | Interactive use (default) |
+| SilentlyContinue | When errors are expected and checked explicitly |
 
 ### Try/Catch Pattern
 
@@ -145,7 +141,7 @@ Write-Output "Value: $value"
 ```powershell
 # Strict mode
 Set-StrictMode -Version Latest
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
 # Paths
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

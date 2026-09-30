@@ -11,6 +11,7 @@ Supports:
     - Python: pytest, unittest
 """
 
+import shutil
 import subprocess
 import sys
 import json
@@ -89,7 +90,7 @@ def run_tests(cmd: list, cwd: Path) -> dict:
     
     try:
         proc = subprocess.run(
-            cmd,
+            [shutil.which(cmd[0]) or cmd[0], *cmd[1:]],
             cwd=str(cwd),
             capture_output=True,
             text=True,

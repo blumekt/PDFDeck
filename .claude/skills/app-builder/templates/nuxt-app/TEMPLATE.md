@@ -1,15 +1,15 @@
 ---
 name: nuxt-app
-description: Nuxt 3 full-stack template. Vue 3, Pinia, Tailwind, Prisma.
+description: Nuxt full-stack template. Vue 3, Pinia, Tailwind, Prisma.
 ---
 
-# Nuxt 3 Full-Stack Template
+# Nuxt Full-Stack Template
 
 ## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
-| Framework | Nuxt 3 |
+| Framework | Nuxt |
 | Language | TypeScript |
 | UI | Vue 3 (Composition API) |
 | State | Pinia |
@@ -98,4 +98,3 @@ project-name/
 - Server routes for API logic
 - Auto-import for clean code
 - TypeScript for type safety
-- See `@[skills/vue-expert]` for Vue patterns
